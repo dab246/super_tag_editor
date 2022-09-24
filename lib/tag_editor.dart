@@ -51,6 +51,7 @@ class TagEditor<T> extends StatefulWidget {
     this.onSubmitted,
     this.inputFormatters,
     this.keyboardAppearance,
+    // SuggestionBox's properties
     this.suggestionsBoxMaxHeight,
     this.suggestionsBoxElevation,
     this.suggestionsBoxBackgroundColor,
@@ -58,6 +59,7 @@ class TagEditor<T> extends StatefulWidget {
     this.iconSuggestionBox,
     this.searchAllSuggestions,
     this.debounceDuration,
+    this.activateSuggestionBox = true,
   }) : super(key: key);
 
   /// The number of tags currently shown.
@@ -121,6 +123,7 @@ class TagEditor<T> extends StatefulWidget {
   final bool readOnly;
   final Brightness? keyboardAppearance;
 
+  /// [SuggestionBox]'s properties.
   final double? suggestionsBoxMaxHeight;
   final double? suggestionsBoxElevation;
   final SuggestionBuilder<T> suggestionBuilder;
@@ -130,6 +133,7 @@ class TagEditor<T> extends StatefulWidget {
   final double? suggestionsBoxRadius;
   final Widget? iconSuggestionBox;
   final Duration? debounceDuration;
+  final bool activateSuggestionBox;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -148,12 +152,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   /// Focus node for checking if the [TextField] is focused.
   late FocusNode _focusNode;
 
-  final StreamController<List<T>?> _suggestionsStreamController = StreamController<List<T>?>.broadcast();
-  late SuggestionsBoxController _suggestionsBoxController;
+  StreamController<List<T>?>? _suggestionsStreamController;
+  SuggestionsBoxController? _suggestionsBoxController;
   final _layerLink = LayerLink();
   List<T>? _suggestions;
   int _searchId = 0;
-  late Debouncer _deBouncer;
+  Debouncer? _deBouncer;
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
 
@@ -161,40 +165,46 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void initState() {
     super.initState();
     _textFieldController = (widget.controller ?? TextEditingController());
-    _deBouncer = Debouncer<String>(
-        widget.debounceDuration ?? const Duration(milliseconds: 300),
-        initialValue: '');
-
-    _deBouncer.values.listen((value) {
-      developer.log('TagsEditorState::initState():_deBouncer:listen: $value');
-      _onSearchChanged(value);
-    });
-
-    _suggestionsBoxController = SuggestionsBoxController(context);
 
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _createOverlayEntry();
-    });
+    if (widget.activateSuggestionBox) _initializeSuggestionBox();
   }
 
   @override
   void dispose() {
     _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
-    _suggestionsStreamController.close();
-    _suggestionsBoxController.close();
+    _suggestionsStreamController?.close();
+    _suggestionsBoxController?.close();
     super.dispose();
+  }
+
+  void _initializeSuggestionBox() {
+    _deBouncer = Debouncer<String>(
+        widget.debounceDuration ?? const Duration(milliseconds: 300),
+        initialValue: '');
+
+    _deBouncer?.values.listen((value) {
+      developer.log('TagsEditorState::initState():_deBouncer:listen: $value');
+      _onSearchChanged(value);
+    });
+
+    _suggestionsBoxController = SuggestionsBoxController(context);
+    _suggestionsStreamController = StreamController<List<T>?>.broadcast();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _createOverlayEntry();
+    });
   }
 
   void _onFocusChanged() {
     if (_focusNode.hasFocus) {
       _scrollToVisible();
-      _suggestionsBoxController.open();
+      _suggestionsBoxController?.open();
     } else {
-      _suggestionsBoxController.close();
+      _suggestionsBoxController?.close();
     }
     setState(() {
       _isFocused = _focusNode.hasFocus;
@@ -202,7 +212,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void _createOverlayEntry() {
-    _suggestionsBoxController.overlayEntry = OverlayEntry(
+    _suggestionsBoxController?.overlayEntry = OverlayEntry(
       builder: (context) {
         if (renderBox != null) {
           final size = renderBox!.size;
@@ -218,7 +228,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           final compositedTransformFollowerOffset = showTop ? Offset(0, -size.height) : Offset.zero;
 
           return StreamBuilder<List<T>?>(
-            stream: _suggestionsStreamController.stream,
+            stream: _suggestionsStreamController?.stream,
             initialData: _suggestions,
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
@@ -281,7 +291,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   /// This function is still ugly, have to fix this later
   void _onTextFieldChange(String string) {
     if (string != _previousText) {
-      _deBouncer.value = string;
+      _deBouncer?.value = string;
     }
 
     final previousText = _previousText;
@@ -317,9 +327,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     if (_searchId == localId && mounted) {
       setState(() => _suggestions = results);
     }
-    _suggestionsStreamController.add(_suggestions ?? []);
-    if (!_suggestionsBoxController.isOpened) {
-      _suggestionsBoxController.open();
+    _suggestionsStreamController?.add(_suggestions ?? []);
+    if (!(_suggestionsBoxController?.isOpened == true)) {
+      _suggestionsBoxController?.open();
     }
   }
 
@@ -330,9 +340,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       if (_searchId == localId && mounted) {
         setState(() => _suggestions = results);
       }
-      _suggestionsStreamController.add(_suggestions ?? []);
-      if (!_suggestionsBoxController.isOpened) {
-        _suggestionsBoxController.open();
+      _suggestionsStreamController?.add(_suggestions ?? []);
+      if (!(_suggestionsBoxController?.isOpened == true)) {
+        _suggestionsBoxController?.open();
       }
     }
   }
@@ -348,7 +358,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   void selectSuggestion(T data) {
     _suggestions = null;
-    _suggestionsStreamController.add([]);
+    _suggestionsStreamController?.add([]);
     _resetTextField();
   }
 
@@ -456,7 +466,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     return NotificationListener<SizeChangedLayoutNotification>(
       onNotification: (SizeChangedLayoutNotification val) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
-          _suggestionsBoxController.overlayEntry?.markNeedsBuild();
+          _suggestionsBoxController?.overlayEntry?.markNeedsBuild();
         });
         return true;
       },
