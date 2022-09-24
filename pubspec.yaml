@@ -1,6 +1,6 @@
 name: super_tag_editor
 description: A simple tag editor for inputing tags. This is design to act and feel similar the standard Material TextField as much as possible.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/dab246/super_tag_editor.git
 
 environment:
