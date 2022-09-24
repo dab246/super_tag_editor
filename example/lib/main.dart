@@ -28,7 +28,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  static const mockResults = ['dat@gmail.com', 'dab246@gmail.com', 'kaka@gmail.com', 'datvu@gmail.com'];
+  static const mockResults = [
+    'dat@gmail.com',
+    'dab246@gmail.com',
+    'kaka@gmail.com',
+    'datvu@gmail.com'
+  ];
 
   List<String> _values = [];
   final FocusNode _focusNode = FocusNode();
@@ -114,10 +119,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (query.isNotEmpty) {
                     var lowercaseQuery = query.toLowerCase();
                     return mockResults.where((profile) {
-                      return profile.toLowerCase().contains(query.toLowerCase()) ||
+                      return profile
+                              .toLowerCase()
+                              .contains(query.toLowerCase()) ||
                           profile.toLowerCase().contains(query.toLowerCase());
                     }).toList(growable: false)
-                      ..sort((a, b) => a.toLowerCase().indexOf(lowercaseQuery).compareTo(b.toLowerCase().indexOf(lowercaseQuery)));
+                      ..sort((a, b) => a
+                          .toLowerCase()
+                          .indexOf(lowercaseQuery)
+                          .compareTo(b.toLowerCase().indexOf(lowercaseQuery)));
                   }
                   return [];
                 },

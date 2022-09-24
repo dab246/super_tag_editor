@@ -12,7 +12,8 @@ import 'dart:developer' as developer;
 import './tag_editor_layout_delegate.dart';
 import './tag_layout.dart';
 
-typedef SuggestionBuilder<T> = Widget Function(BuildContext context, TagsEditorState<T> state, T data);
+typedef SuggestionBuilder<T> = Widget Function(
+    BuildContext context, TagsEditorState<T> state, T data);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 
@@ -219,13 +220,19 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           final renderBoxOffset = renderBox!.localToGlobal(Offset.zero);
           final topAvailableSpace = renderBoxOffset.dy;
           final mq = MediaQuery.of(context);
-          final bottomAvailableSpace = mq.size.height - mq.viewInsets.bottom - renderBoxOffset.dy - size.height;
-          var _suggestionBoxHeight = max(topAvailableSpace, bottomAvailableSpace);
+          final bottomAvailableSpace = mq.size.height -
+              mq.viewInsets.bottom -
+              renderBoxOffset.dy -
+              size.height;
+          var _suggestionBoxHeight =
+              max(topAvailableSpace, bottomAvailableSpace);
           if (null != widget.suggestionsBoxMaxHeight) {
-            _suggestionBoxHeight = min(_suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
+            _suggestionBoxHeight =
+                min(_suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
           }
           final showTop = topAvailableSpace > bottomAvailableSpace;
-          final compositedTransformFollowerOffset = showTop ? Offset(0, -size.height) : Offset.zero;
+          final compositedTransformFollowerOffset =
+              showTop ? Offset(0, -size.height) : Offset.zero;
 
           return StreamBuilder<List<T>?>(
             stream: _suggestionsStreamController?.stream,
@@ -234,26 +241,31 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final suggestionsListView = Material(
                   elevation: widget.suggestionsBoxElevation ?? 20,
-                  borderRadius: BorderRadius.circular(widget.suggestionsBoxRadius ?? 20),
+                  borderRadius:
+                      BorderRadius.circular(widget.suggestionsBoxRadius ?? 20),
                   color: widget.suggestionsBoxBackgroundColor ?? Colors.white,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: _suggestionBoxHeight),
+                    constraints:
+                        BoxConstraints(maxHeight: _suggestionBoxHeight),
                     child: PointerInterceptor(
                       child: Container(
                           decoration: BoxDecoration(
-                              color: widget.suggestionsBoxBackgroundColor ?? Colors.white,
-                              borderRadius: BorderRadius.all(Radius.circular(widget.suggestionsBoxRadius ?? 0))),
+                              color: widget.suggestionsBoxBackgroundColor ??
+                                  Colors.white,
+                              borderRadius: BorderRadius.all(Radius.circular(
+                                  widget.suggestionsBoxRadius ?? 0))),
                           child: ListView.builder(
                             shrinkWrap: true,
                             padding: EdgeInsets.zero,
                             itemCount: snapshot.data!.length,
                             itemBuilder: (context, index) {
-                              return _suggestions != null && _suggestions?.isNotEmpty == true
-                                  ? widget.suggestionBuilder(context, this, _suggestions![index]!)
+                              return _suggestions != null &&
+                                      _suggestions?.isNotEmpty == true
+                                  ? widget.suggestionBuilder(
+                                      context, this, _suggestions![index]!)
                                   : Container();
                             },
-                          )
-                      ),
+                          )),
                     ),
                   ),
                 );
@@ -477,30 +489,30 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 ? tagEditorArea
                 : Container(
                     child: Row(
-                        children: <Widget>[
-                          if (widget.hasAddButton)
-                            Container(
-                              width: 40,
-                              alignment: Alignment.centerLeft,
-                              padding: EdgeInsets.zero,
-                              child: IconTheme.merge(
-                                data: IconThemeData(
-                                  color: _getIconColor(Theme.of(context)),
-                                  size: 18.0,
-                                ),
-                                child: Icon(widget.icon),
+                      children: <Widget>[
+                        if (widget.hasAddButton)
+                          Container(
+                            width: 40,
+                            alignment: Alignment.centerLeft,
+                            padding: EdgeInsets.zero,
+                            child: IconTheme.merge(
+                              data: IconThemeData(
+                                color: _getIconColor(Theme.of(context)),
+                                size: 18.0,
                               ),
+                              child: Icon(widget.icon),
                             ),
-                          if (widget.iconSuggestionBox != null)
-                            Material(
-                                color: Colors.transparent,
-                                shape: const CircleBorder(),
-                                child: IconButton(
-                                    icon: widget.iconSuggestionBox!,
-                                    splashRadius: 20,
-                                    onPressed: () => _openSuggestionBox())),
-                          Expanded(child: tagEditorArea),
-                        ],
+                          ),
+                        if (widget.iconSuggestionBox != null)
+                          Material(
+                              color: Colors.transparent,
+                              shape: const CircleBorder(),
+                              child: IconButton(
+                                  icon: widget.iconSuggestionBox!,
+                                  splashRadius: 20,
+                                  onPressed: () => _openSuggestionBox())),
+                        Expanded(child: tagEditorArea),
+                      ],
                     ),
                   ),
             CompositedTransformTarget(
