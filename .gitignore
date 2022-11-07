@@ -1,7 +1,6 @@
 # Miscellaneous
 *.class
 *.log
-*.lock
 *.pyc
 *.swp
 .DS_Store
@@ -79,3 +78,5 @@ build/
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 example/ios/Flutter/.last_build_id
+
+/pubspec.lock
