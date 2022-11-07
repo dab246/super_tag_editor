@@ -34,7 +34,6 @@ class TagEditor<T> extends StatefulWidget {
     this.delimiters = const [],
     this.icon,
     this.enabled = true,
-    // TextField's properties
     this.controller,
     this.textStyle,
     this.inputDecoration = const InputDecoration(),
@@ -52,7 +51,6 @@ class TagEditor<T> extends StatefulWidget {
     this.onSubmitted,
     this.inputFormatters,
     this.keyboardAppearance,
-    // SuggestionBox's properties
     this.suggestionsBoxMaxHeight,
     this.suggestionsBoxElevation,
     this.suggestionsBoxBackgroundColor,
@@ -61,6 +59,13 @@ class TagEditor<T> extends StatefulWidget {
     this.searchAllSuggestions,
     this.debounceDuration,
     this.activateSuggestionBox = true,
+    this.cursorColor,
+    this.backgroundColor,
+    this.focusedBorderColor,
+    this.enableBorderColor,
+    this.borderRadius,
+    this.borderSize,
+    this.padding,
   }) : super(key: key);
 
   /// The number of tags currently shown.
@@ -123,6 +128,13 @@ class TagEditor<T> extends StatefulWidget {
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
   final Brightness? keyboardAppearance;
+  final Color? cursorColor;
+  final Color? backgroundColor;
+  final Color? focusedBorderColor;
+  final Color? enableBorderColor;
+  final double? borderRadius;
+  final double? borderSize;
+  final EdgeInsets? padding;
 
   /// [SuggestionBox]'s properties.
   final double? suggestionsBoxMaxHeight;
@@ -433,47 +445,92 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         : widget.inputDecoration;
 
     final tagEditorArea = Container(
+      padding: widget.padding ?? EdgeInsets.zero,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(widget.borderRadius ?? 0)),
+        border: Border.all(
+          width: widget.borderSize ?? (_isFocused ? 1 : 0.5),
+          color: _isFocused
+            ? widget.focusedBorderColor ?? Colors.transparent
+            : widget.enableBorderColor ?? Colors.transparent
+        ),
+        color: widget.backgroundColor ?? Colors.transparent
+      ),
       child: TagLayout(
         delegate: TagEditorLayoutDelegate(
           length: widget.length,
           minTextFieldWidth: widget.minTextFieldWidth,
           spacing: widget.tagSpacing,
         ),
-        children: List<Widget>.generate(
-              widget.length,
-              (index) => LayoutId(
-                id: TagEditorLayoutDelegate.getTagId(index),
-                child: widget.tagBuilder(context, index),
-              ),
-            ) +
-            <Widget>[
-              LayoutId(
-                id: TagEditorLayoutDelegate.textFieldId,
-                child: TextField(
-                  style: widget.textStyle,
-                  focusNode: _focusNode,
-                  enabled: widget.enabled,
-                  controller: _textFieldController,
-                  keyboardType: widget.keyboardType,
-                  keyboardAppearance: widget.keyboardAppearance,
-                  textCapitalization: widget.textCapitalization,
-                  textInputAction: widget.textInputAction,
-                  autocorrect: widget.autocorrect,
-                  textAlign: widget.textAlign,
-                  textDirection: widget.textDirection,
-                  readOnly: widget.readOnly,
-                  autofocus: widget.autofocus,
-                  enableSuggestions: widget.enableSuggestions,
-                  maxLines: widget.maxLines,
-                  decoration: decoration,
-                  onChanged: _onTextFieldChange,
-                  onSubmitted: _onSubmitted,
-                  inputFormatters: widget.inputFormatters,
-                ),
-              )
-            ],
+        children: [
+          ...List<Widget>.generate(
+            widget.length,
+            (index) => LayoutId(
+              id: TagEditorLayoutDelegate.getTagId(index),
+              child: widget.tagBuilder(context, index),
+            ),
+          ),
+          LayoutId(
+            id: TagEditorLayoutDelegate.textFieldId,
+            child: TextField(
+              style: widget.textStyle,
+              focusNode: _focusNode,
+              enabled: widget.enabled,
+              controller: _textFieldController,
+              keyboardType: widget.keyboardType,
+              keyboardAppearance: widget.keyboardAppearance,
+              textCapitalization: widget.textCapitalization,
+              textInputAction: widget.textInputAction,
+              cursorColor: widget.cursorColor,
+              autocorrect: widget.autocorrect,
+              textAlign: widget.textAlign,
+              textDirection: widget.textDirection,
+              readOnly: widget.readOnly,
+              autofocus: widget.autofocus,
+              enableSuggestions: widget.enableSuggestions,
+              maxLines: widget.maxLines,
+              decoration: decoration,
+              onChanged: _onTextFieldChange,
+              onSubmitted: _onSubmitted,
+              inputFormatters: widget.inputFormatters,
+            ),
+          )
+        ],
       ),
     );
+
+    Widget? itemChild;
+
+    if (widget.icon == null && widget.iconSuggestionBox == null) {
+      itemChild = tagEditorArea;
+    } else {
+      itemChild = Row(
+        children: <Widget>[
+          if (widget.hasAddButton)
+            Container(
+              width: 40,
+              alignment: Alignment.centerLeft,
+              padding: EdgeInsets.zero,
+              child: IconTheme.merge(
+                data: IconThemeData(
+                  color: _getIconColor(Theme.of(context)),
+                  size: 18.0,
+                ),
+                child: Icon(widget.icon),
+              ),
+            ),
+          if (widget.iconSuggestionBox != null)
+            Material(
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: widget.iconSuggestionBox!,
+                splashRadius: 20,
+                onPressed: () => _openSuggestionBox())),
+          Expanded(child: tagEditorArea),
+        ],
+      );
+    }
 
     return NotificationListener<SizeChangedLayoutNotification>(
       onNotification: (SizeChangedLayoutNotification val) {
@@ -485,36 +542,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       child: SizeChangedLayoutNotifier(
         child: Column(
           children: <Widget>[
-            widget.icon == null && widget.iconSuggestionBox == null
-                ? tagEditorArea
-                : Container(
-                    child: Row(
-                      children: <Widget>[
-                        if (widget.hasAddButton)
-                          Container(
-                            width: 40,
-                            alignment: Alignment.centerLeft,
-                            padding: EdgeInsets.zero,
-                            child: IconTheme.merge(
-                              data: IconThemeData(
-                                color: _getIconColor(Theme.of(context)),
-                                size: 18.0,
-                              ),
-                              child: Icon(widget.icon),
-                            ),
-                          ),
-                        if (widget.iconSuggestionBox != null)
-                          Material(
-                              color: Colors.transparent,
-                              shape: const CircleBorder(),
-                              child: IconButton(
-                                  icon: widget.iconSuggestionBox!,
-                                  splashRadius: 20,
-                                  onPressed: () => _openSuggestionBox())),
-                        Expanded(child: tagEditorArea),
-                      ],
-                    ),
-                  ),
+            itemChild,
             CompositedTransformTarget(
               link: _layerLink,
               child: Container(),
