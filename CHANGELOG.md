@@ -1,4 +1,8 @@
 
+# 0.0.3
+
+- Customize style tag input: `background`, `border`, `cursor`
+
 # 0.0.2
 
 - Support `activated/deactivated` for suggestion box
