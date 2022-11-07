@@ -20,53 +20,54 @@ typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 /// A [Widget] for editing tag similar to Google's Gmail
 /// email address input widget in the iOS app.
 class TagEditor<T> extends StatefulWidget {
-  const TagEditor({
-    required this.length,
-    this.minTextFieldWidth = 160.0,
-    this.tagSpacing = 4.0,
-    required this.tagBuilder,
-    required this.onTagChanged,
-    required this.suggestionBuilder,
-    required this.findSuggestions,
-    Key? key,
-    this.focusNode,
-    this.hasAddButton = true,
-    this.delimiters = const [],
-    this.icon,
-    this.enabled = true,
-    this.controller,
-    this.textStyle,
-    this.inputDecoration = const InputDecoration(),
-    this.keyboardType,
-    this.textInputAction,
-    this.textCapitalization = TextCapitalization.none,
-    this.textAlign = TextAlign.start,
-    this.textDirection,
-    this.readOnly = false,
-    this.autofocus = false,
-    this.autocorrect = false,
-    this.enableSuggestions = true,
-    this.maxLines = 1,
-    this.resetTextOnSubmitted = false,
-    this.onSubmitted,
-    this.inputFormatters,
-    this.keyboardAppearance,
-    this.suggestionsBoxMaxHeight,
-    this.suggestionsBoxElevation,
-    this.suggestionsBoxBackgroundColor,
-    this.suggestionsBoxRadius,
-    this.iconSuggestionBox,
-    this.searchAllSuggestions,
-    this.debounceDuration,
-    this.activateSuggestionBox = true,
-    this.cursorColor,
-    this.backgroundColor,
-    this.focusedBorderColor,
-    this.enableBorderColor,
-    this.borderRadius,
-    this.borderSize,
-    this.padding,
-  }) : super(key: key);
+  const TagEditor(
+      {required this.length,
+      this.minTextFieldWidth = 160.0,
+      this.tagSpacing = 4.0,
+      required this.tagBuilder,
+      required this.onTagChanged,
+      required this.suggestionBuilder,
+      required this.findSuggestions,
+      Key? key,
+      this.focusNode,
+      this.hasAddButton = true,
+      this.delimiters = const [],
+      this.icon,
+      this.enabled = true,
+      this.controller,
+      this.textStyle,
+      this.inputDecoration = const InputDecoration(),
+      this.keyboardType,
+      this.textInputAction,
+      this.textCapitalization = TextCapitalization.none,
+      this.textAlign = TextAlign.start,
+      this.textDirection,
+      this.readOnly = false,
+      this.autofocus = false,
+      this.autocorrect = false,
+      this.enableSuggestions = true,
+      this.maxLines = 1,
+      this.resetTextOnSubmitted = false,
+      this.onSubmitted,
+      this.inputFormatters,
+      this.keyboardAppearance,
+      this.suggestionsBoxMaxHeight,
+      this.suggestionsBoxElevation,
+      this.suggestionsBoxBackgroundColor,
+      this.suggestionsBoxRadius,
+      this.iconSuggestionBox,
+      this.searchAllSuggestions,
+      this.debounceDuration,
+      this.activateSuggestionBox = true,
+      this.cursorColor,
+      this.backgroundColor,
+      this.focusedBorderColor,
+      this.enableBorderColor,
+      this.borderRadius,
+      this.borderSize,
+      this.padding,
+      this.suggestionPadding})
+      : super(key: key);
 
   /// The number of tags currently shown.
   final int length;
@@ -147,6 +148,7 @@ class TagEditor<T> extends StatefulWidget {
   final Widget? iconSuggestionBox;
   final Duration? debounceDuration;
   final bool activateSuggestionBox;
+  final EdgeInsets? suggestionPadding;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -251,21 +253,23 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             initialData: _suggestions,
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final suggestionsListView = Material(
-                  elevation: widget.suggestionsBoxElevation ?? 20,
-                  borderRadius:
-                      BorderRadius.circular(widget.suggestionsBoxRadius ?? 20),
-                  color: widget.suggestionsBoxBackgroundColor ?? Colors.white,
-                  child: ConstrainedBox(
-                    constraints:
-                        BoxConstraints(maxHeight: _suggestionBoxHeight),
-                    child: PointerInterceptor(
+                final suggestionsListView = PointerInterceptor(
+                  child: Padding(
+                    padding: widget.suggestionPadding ?? EdgeInsets.zero,
+                    child: Material(
+                      elevation: widget.suggestionsBoxElevation ?? 20,
+                      borderRadius: BorderRadius.circular(
+                          widget.suggestionsBoxRadius ?? 20),
+                      color:
+                          widget.suggestionsBoxBackgroundColor ?? Colors.white,
                       child: Container(
                           decoration: BoxDecoration(
                               color: widget.suggestionsBoxBackgroundColor ??
                                   Colors.white,
                               borderRadius: BorderRadius.all(Radius.circular(
                                   widget.suggestionsBoxRadius ?? 0))),
+                          constraints:
+                              BoxConstraints(maxHeight: _suggestionBoxHeight),
                           child: ListView.builder(
                             shrinkWrap: true,
                             padding: EdgeInsets.zero,
@@ -447,15 +451,14 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     final tagEditorArea = Container(
       padding: widget.padding ?? EdgeInsets.zero,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.all(Radius.circular(widget.borderRadius ?? 0)),
-        border: Border.all(
-          width: widget.borderSize ?? (_isFocused ? 1 : 0.5),
-          color: _isFocused
-            ? widget.focusedBorderColor ?? Colors.transparent
-            : widget.enableBorderColor ?? Colors.transparent
-        ),
-        color: widget.backgroundColor ?? Colors.transparent
-      ),
+          borderRadius:
+              BorderRadius.all(Radius.circular(widget.borderRadius ?? 0)),
+          border: Border.all(
+              width: widget.borderSize ?? (_isFocused ? 1 : 0.5),
+              color: _isFocused
+                  ? widget.focusedBorderColor ?? Colors.transparent
+                  : widget.enableBorderColor ?? Colors.transparent),
+          color: widget.backgroundColor ?? Colors.transparent),
       child: TagLayout(
         delegate: TagEditorLayoutDelegate(
           length: widget.length,
@@ -521,12 +524,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             ),
           if (widget.iconSuggestionBox != null)
             Material(
-              color: Colors.transparent,
-              shape: const CircleBorder(),
-              child: IconButton(
-                icon: widget.iconSuggestionBox!,
-                splashRadius: 20,
-                onPressed: () => _openSuggestionBox())),
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: IconButton(
+                    icon: widget.iconSuggestionBox!,
+                    splashRadius: 20,
+                    onPressed: () => _openSuggestionBox())),
           Expanded(child: tagEditorArea),
         ],
       );

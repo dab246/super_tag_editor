@@ -1,4 +1,8 @@
 
+# 0.0.3+1
+
+- Add `padding` for suggestion box
+
 # 0.0.3
 
 - Customize style tag input: `background`, `border`, `cursor`
