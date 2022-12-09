@@ -1,4 +1,8 @@
 
+# 0.0.3+2
+
+- Add `margin` for suggestion box
+
 # 0.0.3+1
 
 - Add `padding` for suggestion box

@@ -66,7 +66,8 @@ class TagEditor<T> extends StatefulWidget {
       this.borderRadius,
       this.borderSize,
       this.padding,
-      this.suggestionPadding})
+      this.suggestionPadding,
+      this.suggestionMargin})
       : super(key: key);
 
   /// The number of tags currently shown.
@@ -148,6 +149,7 @@ class TagEditor<T> extends StatefulWidget {
   final Widget? iconSuggestionBox;
   final Duration? debounceDuration;
   final bool activateSuggestionBox;
+  final EdgeInsets? suggestionMargin;
   final EdgeInsets? suggestionPadding;
 
   @override
@@ -255,7 +257,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final suggestionsListView = PointerInterceptor(
                   child: Padding(
-                    padding: widget.suggestionPadding ?? EdgeInsets.zero,
+                    padding: widget.suggestionMargin ?? EdgeInsets.zero,
                     child: Material(
                       elevation: widget.suggestionsBoxElevation ?? 20,
                       borderRadius: BorderRadius.circular(
@@ -272,7 +274,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                               BoxConstraints(maxHeight: _suggestionBoxHeight),
                           child: ListView.builder(
                             shrinkWrap: true,
-                            padding: EdgeInsets.zero,
+                            padding:
+                                widget.suggestionPadding ?? EdgeInsets.zero,
                             itemCount: snapshot.data!.length,
                             itemBuilder: (context, index) {
                               return _suggestions != null &&
