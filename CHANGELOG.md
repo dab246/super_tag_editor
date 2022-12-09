@@ -1,4 +1,8 @@
 
+# 0.0.3+3
+
+- Enable/Disable auto dispose `FocusNode`
+
 # 0.0.3+2
 
 - Add `margin` for suggestion box
