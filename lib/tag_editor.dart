@@ -228,9 +228,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     } else {
       _suggestionsBoxController?.close();
     }
-    setState(() {
-      _isFocused = _focusNode.hasFocus;
-    });
+
+    if (mounted) {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    }
   }
 
   void _createOverlayEntry() {
