@@ -67,6 +67,7 @@ class TagEditor<T> extends StatefulWidget {
       this.borderSize,
       this.padding,
       this.suggestionPadding,
+      this.autoDisposeFocusNode = true,
       this.suggestionMargin})
       : super(key: key);
 
@@ -137,6 +138,7 @@ class TagEditor<T> extends StatefulWidget {
   final double? borderRadius;
   final double? borderSize;
   final EdgeInsets? padding;
+  final bool autoDisposeFocusNode;
 
   /// [SuggestionBox]'s properties.
   final double? suggestionsBoxMaxHeight;
@@ -191,8 +193,11 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_onFocusChanged);
-    _focusNode.dispose();
+    developer.log('TagsEditorState::dispose():');
+    if (widget.autoDisposeFocusNode || widget.focusNode == null) {
+      _focusNode.removeListener(_onFocusChanged);
+      _focusNode.dispose();
+    }
     _suggestionsStreamController?.close();
     _suggestionsBoxController?.close();
     super.dispose();
@@ -204,7 +209,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         initialValue: '');
 
     _deBouncer?.values.listen((value) {
-      developer.log('TagsEditorState::initState():_deBouncer:listen: $value');
+      developer.log('TagsEditorState::_initializeSuggestionBox():_deBouncer:listen: $value');
       _onSearchChanged(value);
     });
 
