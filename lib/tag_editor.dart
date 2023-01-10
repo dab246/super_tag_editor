@@ -70,7 +70,6 @@ class TagEditor<T> extends StatefulWidget {
       this.suggestionPadding,
       this.autoDisposeFocusNode = true,
       this.suggestionMargin,
-      this.maxBackspacePressedToDelete = 2,
       this.onDeleteTagAction
   }) : super(key: key);
 
@@ -116,8 +115,6 @@ class TagEditor<T> extends StatefulWidget {
   final FocusNode? focusNode;
 
   final OnDeleteTagAction? onDeleteTagAction;
-
-  final int maxBackspacePressedToDelete;
 
   /// [TextField]'s properties.
   ///
@@ -183,7 +180,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   final _layerLink = LayerLink();
   List<T>? _suggestions;
   int _searchId = 0;
-  int _countBackspacePressed = 0;
   Debouncer? _deBouncer;
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
@@ -458,15 +454,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     return _isFocused ? activeColor : _getDefaultIconColor(themeData);
   }
 
-  void _onKeyboardBackspaceListener() {
-    developer.log('TagsEditorState::_onKeyboardBackspaceListener():');
-    if (_textFieldController.text.isEmpty) {
-      _countBackspacePressed++;
-    }
-    developer.log('TagsEditorState::_onKeyboardBackspaceListener():_countBackspacePressed: $_countBackspacePressed');
-    if (_countBackspacePressed >= widget.maxBackspacePressedToDelete) {
+  void _onKeyboardBackspaceListener() async {
+    if (_textFieldController.text.isEmpty && widget.length > 0) {
+      developer.log('TagsEditorState::_onKeyboardBackspaceListener():onDeleteTagAction called');
       widget.onDeleteTagAction?.call();
-      _countBackspacePressed = 0;
     }
   }
 
