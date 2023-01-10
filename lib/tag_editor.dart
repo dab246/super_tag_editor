@@ -16,6 +16,7 @@ typedef SuggestionBuilder<T> = Widget Function(
     BuildContext context, TagsEditorState<T> state, T data);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
+typedef OnDeleteTagAction = Function();
 
 /// A [Widget] for editing tag similar to Google's Gmail
 /// email address input widget in the iOS app.
@@ -68,8 +69,10 @@ class TagEditor<T> extends StatefulWidget {
       this.padding,
       this.suggestionPadding,
       this.autoDisposeFocusNode = true,
-      this.suggestionMargin})
-      : super(key: key);
+      this.suggestionMargin,
+      this.maxBackspacePressedToDelete = 2,
+      this.onDeleteTagAction
+  }) : super(key: key);
 
   /// The number of tags currently shown.
   final int length;
@@ -111,6 +114,10 @@ class TagEditor<T> extends StatefulWidget {
 
   /// Focus node for checking if the [TextField] is focused.
   final FocusNode? focusNode;
+
+  final OnDeleteTagAction? onDeleteTagAction;
+
+  final int maxBackspacePressedToDelete;
 
   /// [TextField]'s properties.
   ///
@@ -176,6 +183,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   final _layerLink = LayerLink();
   List<T>? _suggestions;
   int _searchId = 0;
+  int _countBackspacePressed = 0;
   Debouncer? _deBouncer;
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
@@ -450,6 +458,18 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     return _isFocused ? activeColor : _getDefaultIconColor(themeData);
   }
 
+  void _onKeyboardBackspaceListener() {
+    developer.log('TagsEditorState::_onKeyboardBackspaceListener():');
+    if (_textFieldController.text.isEmpty) {
+      _countBackspacePressed++;
+    }
+    developer.log('TagsEditorState::_onKeyboardBackspaceListener():_countBackspacePressed: $_countBackspacePressed');
+    if (_countBackspacePressed >= widget.maxBackspacePressedToDelete) {
+      widget.onDeleteTagAction?.call();
+      _countBackspacePressed = 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final decoration = widget.hasAddButton
@@ -490,27 +510,36 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           ),
           LayoutId(
             id: TagEditorLayoutDelegate.textFieldId,
-            child: TextField(
-              style: widget.textStyle,
-              focusNode: _focusNode,
-              enabled: widget.enabled,
-              controller: _textFieldController,
-              keyboardType: widget.keyboardType,
-              keyboardAppearance: widget.keyboardAppearance,
-              textCapitalization: widget.textCapitalization,
-              textInputAction: widget.textInputAction,
-              cursorColor: widget.cursorColor,
-              autocorrect: widget.autocorrect,
-              textAlign: widget.textAlign,
-              textDirection: widget.textDirection,
-              readOnly: widget.readOnly,
-              autofocus: widget.autofocus,
-              enableSuggestions: widget.enableSuggestions,
-              maxLines: widget.maxLines,
-              decoration: decoration,
-              onChanged: _onTextFieldChange,
-              onSubmitted: _onSubmitted,
-              inputFormatters: widget.inputFormatters,
+            child: RawKeyboardListener(
+              focusNode: FocusNode(),
+              onKey: (event) {
+                if (event is RawKeyDownEvent &&
+                  event.logicalKey == LogicalKeyboardKey.backspace) {
+                  _onKeyboardBackspaceListener();
+                }
+              },
+              child: TextField(
+                style: widget.textStyle,
+                focusNode: _focusNode,
+                enabled: widget.enabled,
+                controller: _textFieldController,
+                keyboardType: widget.keyboardType,
+                keyboardAppearance: widget.keyboardAppearance,
+                textCapitalization: widget.textCapitalization,
+                textInputAction: widget.textInputAction,
+                cursorColor: widget.cursorColor,
+                autocorrect: widget.autocorrect,
+                textAlign: widget.textAlign,
+                textDirection: widget.textDirection,
+                readOnly: widget.readOnly,
+                autofocus: widget.autofocus,
+                enableSuggestions: widget.enableSuggestions,
+                maxLines: widget.maxLines,
+                decoration: decoration,
+                onChanged: _onTextFieldChange,
+                onSubmitted: _onSubmitted,
+                inputFormatters: widget.inputFormatters,
+              ),
             ),
           )
         ],
