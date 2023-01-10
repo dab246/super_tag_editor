@@ -323,7 +323,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void _onTagChanged(String string) {
     if (string.isNotEmpty) {
       widget.onTagChanged(string);
-      _resetTextField();
+      resetTextField();
     }
   }
 
@@ -344,7 +344,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     // the text is set with `TextEditingController` the behaviour of TextEditingContoller
     // should be controller by the developer themselves
     if (string.length == 1 && widget.delimiters.contains(string)) {
-      _resetTextField();
+      resetTextField();
       return;
     }
 
@@ -367,12 +367,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       setState(() => _suggestions = results);
     }
     _suggestionsStreamController?.add(_suggestions ?? []);
-    if (!(_suggestionsBoxController?.isOpened == true)) {
-      _suggestionsBoxController?.open();
-    }
+    _suggestionsBoxController?.open();
   }
 
-  void _openSuggestionBox() async {
+  void openSuggestionBox() async {
     if (widget.searchAllSuggestions != null) {
       final localId = ++_searchId;
       final results = await widget.searchAllSuggestions!();
@@ -380,10 +378,16 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         setState(() => _suggestions = results);
       }
       _suggestionsStreamController?.add(_suggestions ?? []);
-      if (!(_suggestionsBoxController?.isOpened == true)) {
-        _suggestionsBoxController?.open();
-      }
+      _suggestionsBoxController?.open();
     }
+  }
+
+  void closeSuggestionBox({bool isClearData = true}) {
+    if (isClearData) {
+      _suggestions = null;
+      _suggestionsStreamController?.add([]);
+    }
+    _suggestionsBoxController?.close();
   }
 
   void _scrollToVisible() {
@@ -398,17 +402,17 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void selectSuggestion(T data) {
     _suggestions = null;
     _suggestionsStreamController?.add([]);
-    _resetTextField();
+    resetTextField();
   }
 
   void _onSubmitted(String string) {
     widget.onSubmitted?.call(string);
     if (widget.resetTextOnSubmitted) {
-      _resetTextField();
+      resetTextField();
     }
   }
 
-  void _resetTextField() {
+  void resetTextField() {
     _textFieldController.text = '';
     _previousText = '';
   }
@@ -540,7 +544,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 child: IconButton(
                     icon: widget.iconSuggestionBox!,
                     splashRadius: 20,
-                    onPressed: () => _openSuggestionBox())),
+                    onPressed: () => openSuggestionBox())),
           Expanded(child: tagEditorArea),
         ],
       );
