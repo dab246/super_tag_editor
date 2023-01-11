@@ -11,11 +11,12 @@ import 'package:pointer_interceptor/pointer_interceptor.dart';
 import './tag_editor_layout_delegate.dart';
 import './tag_layout.dart';
 
-typedef SuggestionBuilder<T> = Widget Function(
-    BuildContext context, TagsEditorState<T> state, T data, bool highlight);
+typedef SuggestionBuilder<T> = Widget Function(BuildContext context,
+    TagsEditorState<T> state, T data, int index, int lenght, bool highlight);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 typedef OnDeleteTagAction = Function();
+typedef OnFocusTagAction = Function(bool focused);
 typedef OnSelectOptionAction<T> = Function(T data);
 
 /// A [Widget] for editing tag similar to Google's Gmail
@@ -71,8 +72,9 @@ class TagEditor<T> extends StatefulWidget {
       this.autoDisposeFocusNode = true,
       this.suggestionMargin,
       this.onDeleteTagAction,
+      this.onFocusTagAction,
       this.itemHighlightColor,
-      this.highlightItemDecoration,
+      this.useDefaultHighlight = true,
       this.onSelectOptionAction})
       : super(key: key);
 
@@ -118,6 +120,7 @@ class TagEditor<T> extends StatefulWidget {
   final FocusNode? focusNode;
 
   final OnDeleteTagAction? onDeleteTagAction;
+  final OnFocusTagAction? onFocusTagAction;
 
   /// [TextField]'s properties.
   ///
@@ -162,7 +165,7 @@ class TagEditor<T> extends StatefulWidget {
   final bool activateSuggestionBox;
   final EdgeInsets? suggestionMargin;
   final EdgeInsets? suggestionPadding;
-  final BoxDecoration? highlightItemDecoration;
+  final bool useDefaultHighlight;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -187,6 +190,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   final _layerLink = LayerLink();
   List<T>? _suggestions;
   int _searchId = 0;
+  int _countBackspacePressed = 0;
   Debouncer<String>? _deBouncer;
   final ValueNotifier<int> _highlightedOptionIndex = ValueNotifier<int>(0);
 
@@ -196,7 +200,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void initState() {
     super.initState();
     _textFieldController = (widget.controller ?? TextEditingController());
-    _focusNodeKeyboard = FocusNode();
+    _focusNodeKeyboard = FocusNode()..addListener(_onFocusKeyboardChanged);
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
 
@@ -211,6 +215,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     }
     _suggestionsStreamController?.close();
     _suggestionsBoxController?.close();
+    _focusNodeKeyboard.removeListener(_onFocusKeyboardChanged);
     _focusNodeKeyboard.dispose();
     _highlightedOptionIndex.dispose();
     super.dispose();
@@ -257,6 +262,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   void _onFocusChanged() {
     if (_focusNode.hasFocus) {
+      widget.onFocusTagAction?.call(false);
+      _countBackspacePressed = 0;
       _scrollToVisible();
       _suggestionsBoxController?.open();
     } else {
@@ -267,6 +274,16 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       setState(() {
         _isFocused = _focusNode.hasFocus;
       });
+    }
+  }
+
+  void _onFocusKeyboardChanged() {
+    if (_focusNodeKeyboard.hasFocus) {
+      widget.onFocusTagAction?.call(true);
+      _countBackspacePressed = 1;
+    } else {
+      widget.onFocusTagAction?.call(false);
+      _countBackspacePressed = 0;
     }
   }
 
@@ -329,17 +346,29 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                                       AutocompleteHighlightedOption.of(
                                               context) ==
                                           index;
-                                  return Container(
-                                      color: highlight &&
-                                              widget.highlightItemDecoration ==
-                                                  null
-                                          ? widget.itemHighlightColor ??
-                                              Theme.of(context).focusColor
-                                          : null,
-                                      decoration:
-                                          widget.highlightItemDecoration,
-                                      child: widget.suggestionBuilder(
-                                          context, this, item, highlight));
+
+                                  if (!widget.useDefaultHighlight) {
+                                    return widget.suggestionBuilder(
+                                        context,
+                                        this,
+                                        item,
+                                        index,
+                                        snapshot.data!.length,
+                                        highlight);
+                                  } else {
+                                    return Container(
+                                        color: highlight
+                                            ? widget.itemHighlightColor ??
+                                                Theme.of(context).focusColor
+                                            : null,
+                                        child: widget.suggestionBuilder(
+                                            context,
+                                            this,
+                                            item,
+                                            index,
+                                            snapshot.data!.length,
+                                            highlight));
+                                  }
                                 } else {
                                   return Container();
                                 }
@@ -508,7 +537,24 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   void _onKeyboardBackspaceListener() async {
     if (_textFieldController.text.isEmpty && widget.length > 0) {
-      widget.onDeleteTagAction?.call();
+      _countBackspacePressed++;
+
+      if (_countBackspacePressed == 1) {
+        _focusNode.unfocus();
+        _focusNodeKeyboard.requestFocus();
+      } else if (_countBackspacePressed >= 2) {
+        widget.onDeleteTagAction?.call();
+        if (widget.length > 1) {
+          _countBackspacePressed = 1;
+        } else {
+          _countBackspacePressed = 0;
+          _focusNodeKeyboard.unfocus();
+          _focusNode.requestFocus();
+        }
+      }
+    } else {
+      _focusNodeKeyboard.unfocus();
+      _focusNode.requestFocus();
     }
   }
 

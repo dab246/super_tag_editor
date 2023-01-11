@@ -38,6 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> _values = [];
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _textEditingController = TextEditingController();
+  bool focusTagEnabled = false;
 
   _onDelete(index) {
     setState(() {
@@ -93,34 +94,54 @@ class _MyHomePageState extends State<MyHomePage> {
                     _values.add(newValue);
                   });
                 },
-                tagBuilder: (context, index) => _Chip(
-                  index: index,
-                  label: _values[index],
-                  onDeleted: _onDelete,
+                tagBuilder: (context, index) => Container(
+                  color: focusTagEnabled && index == _values.length - 1
+                      ? Colors.redAccent
+                      : Colors.white,
+                  child: _Chip(
+                    index: index,
+                    label: _values[index],
+                    onDeleted: _onDelete,
+                  ),
                 ),
                 // InputFormatters example, this disallow \ and /
                 inputFormatters: [
                   FilteringTextInputFormatter.deny(RegExp(r'[/\\]'))
                 ],
-                suggestionBuilder: (context, state, data, highlight) {
-                  return Text(data);
+                useDefaultHighlight: false,
+                suggestionBuilder:
+                    (context, state, data, index, length, highlight) {
+                  var borderRadius =
+                      const BorderRadius.all(Radius.circular(20));
+                  if (index == 0) {
+                    borderRadius = const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    );
+                  } else if (index == length - 1) {
+                    borderRadius = const BorderRadius.only(
+                      bottomRight: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    );
+                  }
+                  return Container(
+                      decoration: highlight
+                          ? BoxDecoration(
+                              color: Theme.of(context).focusColor,
+                              borderRadius: borderRadius)
+                          : null,
+                      padding: const EdgeInsets.all(16),
+                      child: Text(data));
+                },
+                onFocusTagAction: (focused) {
+                  setState(() {
+                    focusTagEnabled = focused;
+                  });
                 },
                 onDeleteTagAction: () {
                   if (_values.isNotEmpty) {
                     setState(() {
-                      final item = _values.removeLast();
-
-                      Future.delayed(const Duration(milliseconds: 10), () {
-                        _textEditingController.text = item;
-                        _textEditingController.value =
-                            _textEditingController.value.copyWith(
-                          text: item,
-                          selection: TextSelection(
-                            baseOffset: item.length,
-                            extentOffset: item.length,
-                          ),
-                        );
-                      });
+                      _values.removeLast();
                     });
                   }
                 },
