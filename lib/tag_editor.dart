@@ -7,16 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
-import 'dart:developer' as developer;
 
 import './tag_editor_layout_delegate.dart';
 import './tag_layout.dart';
 
 typedef SuggestionBuilder<T> = Widget Function(
-    BuildContext context, TagsEditorState<T> state, T data);
+    BuildContext context, TagsEditorState<T> state, T data, bool highlight);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 typedef OnDeleteTagAction = Function();
+typedef OnSelectOptionAction<T> = Function(T data);
 
 /// A [Widget] for editing tag similar to Google's Gmail
 /// email address input widget in the iOS app.
@@ -70,8 +70,11 @@ class TagEditor<T> extends StatefulWidget {
       this.suggestionPadding,
       this.autoDisposeFocusNode = true,
       this.suggestionMargin,
-      this.onDeleteTagAction
-  }) : super(key: key);
+      this.onDeleteTagAction,
+      this.itemHighlightColor,
+      this.highlightItemDecoration,
+      this.onSelectOptionAction})
+      : super(key: key);
 
   /// The number of tags currently shown.
   final int length;
@@ -150,13 +153,16 @@ class TagEditor<T> extends StatefulWidget {
   final SuggestionBuilder<T> suggestionBuilder;
   final InputSuggestions<T> findSuggestions;
   final SearchSuggestions<T>? searchAllSuggestions;
+  final OnSelectOptionAction<T>? onSelectOptionAction;
   final Color? suggestionsBoxBackgroundColor;
+  final Color? itemHighlightColor;
   final double? suggestionsBoxRadius;
   final Widget? iconSuggestionBox;
   final Duration? debounceDuration;
   final bool activateSuggestionBox;
   final EdgeInsets? suggestionMargin;
   final EdgeInsets? suggestionPadding;
+  final BoxDecoration? highlightItemDecoration;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -174,13 +180,15 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   /// Focus node for checking if the [TextField] is focused.
   late FocusNode _focusNode;
+  late FocusNode _focusNodeKeyboard;
 
   StreamController<List<T>?>? _suggestionsStreamController;
   SuggestionsBoxController? _suggestionsBoxController;
   final _layerLink = LayerLink();
   List<T>? _suggestions;
   int _searchId = 0;
-  Debouncer? _deBouncer;
+  Debouncer<String>? _deBouncer;
+  final ValueNotifier<int> _highlightedOptionIndex = ValueNotifier<int>(0);
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
 
@@ -188,7 +196,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void initState() {
     super.initState();
     _textFieldController = (widget.controller ?? TextEditingController());
-
+    _focusNodeKeyboard = FocusNode();
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
 
@@ -197,14 +205,39 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   @override
   void dispose() {
-    developer.log('TagsEditorState::dispose():');
     if (widget.autoDisposeFocusNode || widget.focusNode == null) {
       _focusNode.removeListener(_onFocusChanged);
       _focusNode.dispose();
     }
     _suggestionsStreamController?.close();
     _suggestionsBoxController?.close();
+    _focusNodeKeyboard.dispose();
+    _highlightedOptionIndex.dispose();
     super.dispose();
+  }
+
+  void _updateHighlight(int newIndex) {
+    _highlightedOptionIndex.value =
+        _suggestions?.isNotEmpty == true ? newIndex % _suggestions!.length : 0;
+  }
+
+  void _highlightPreviousOption() {
+    _updateHighlight(_highlightedOptionIndex.value - 1);
+  }
+
+  void _highlightNextOption() {
+    _updateHighlight(_highlightedOptionIndex.value + 1);
+  }
+
+  void _selectOption() {
+    final currentHighlightIndex = _highlightedOptionIndex.value;
+    if (_suggestions?.isNotEmpty == true &&
+        currentHighlightIndex >= 0 &&
+        currentHighlightIndex < _suggestions!.length) {
+      final optionSelected = _suggestions![currentHighlightIndex];
+      widget.onSelectOptionAction?.call(optionSelected);
+      resetTextField();
+    }
   }
 
   void _initializeSuggestionBox() {
@@ -212,10 +245,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         widget.debounceDuration ?? const Duration(milliseconds: 300),
         initialValue: '');
 
-    _deBouncer?.values.listen((value) {
-      developer.log('TagsEditorState::_initializeSuggestionBox():_deBouncer:listen: $value');
-      _onSearchChanged(value);
-    });
+    _deBouncer?.values.listen(_onSearchChanged);
 
     _suggestionsBoxController = SuggestionsBoxController(context);
     _suggestionsStreamController = StreamController<List<T>?>.broadcast();
@@ -268,35 +298,54 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final suggestionsListView = PointerInterceptor(
-                  child: Padding(
-                    padding: widget.suggestionMargin ?? EdgeInsets.zero,
-                    child: Material(
-                      elevation: widget.suggestionsBoxElevation ?? 20,
-                      borderRadius: BorderRadius.circular(
-                          widget.suggestionsBoxRadius ?? 20),
-                      color:
-                          widget.suggestionsBoxBackgroundColor ?? Colors.white,
-                      child: Container(
-                          decoration: BoxDecoration(
-                              color: widget.suggestionsBoxBackgroundColor ??
-                                  Colors.white,
-                              borderRadius: BorderRadius.all(Radius.circular(
-                                  widget.suggestionsBoxRadius ?? 0))),
-                          constraints:
-                              BoxConstraints(maxHeight: _suggestionBoxHeight),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding:
-                                widget.suggestionPadding ?? EdgeInsets.zero,
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              return _suggestions != null &&
-                                      _suggestions?.isNotEmpty == true
-                                  ? widget.suggestionBuilder(
-                                      context, this, _suggestions![index]!)
-                                  : Container();
-                            },
-                          )),
+                  child: AutocompleteHighlightedOption(
+                    highlightIndexNotifier: _highlightedOptionIndex,
+                    child: Padding(
+                      padding: widget.suggestionMargin ?? EdgeInsets.zero,
+                      child: Material(
+                        elevation: widget.suggestionsBoxElevation ?? 20,
+                        borderRadius: BorderRadius.circular(
+                            widget.suggestionsBoxRadius ?? 20),
+                        color: widget.suggestionsBoxBackgroundColor ??
+                            Colors.white,
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: widget.suggestionsBoxBackgroundColor ??
+                                    Colors.white,
+                                borderRadius: BorderRadius.all(Radius.circular(
+                                    widget.suggestionsBoxRadius ?? 0))),
+                            constraints:
+                                BoxConstraints(maxHeight: _suggestionBoxHeight),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              padding:
+                                  widget.suggestionPadding ?? EdgeInsets.zero,
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (context, index) {
+                                if (_suggestions != null &&
+                                    _suggestions?.isNotEmpty == true) {
+                                  final item = _suggestions![index];
+                                  final highlight =
+                                      AutocompleteHighlightedOption.of(
+                                              context) ==
+                                          index;
+                                  return Container(
+                                      color: highlight &&
+                                              widget.highlightItemDecoration ==
+                                                  null
+                                          ? widget.itemHighlightColor ??
+                                              Theme.of(context).focusColor
+                                          : null,
+                                      decoration:
+                                          widget.highlightItemDecoration,
+                                      child: widget.suggestionBuilder(
+                                          context, this, item, highlight));
+                                } else {
+                                  return Container();
+                                }
+                              },
+                            )),
+                      ),
                     ),
                   ),
                 );
@@ -370,6 +419,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     if (_searchId == localId && mounted) {
       setState(() => _suggestions = results);
     }
+    _updateHighlight(0);
     _suggestionsStreamController?.add(_suggestions ?? []);
     _suggestionsBoxController?.open();
   }
@@ -381,6 +431,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       if (_searchId == localId && mounted) {
         setState(() => _suggestions = results);
       }
+      _updateHighlight(0);
       _suggestionsStreamController?.add(_suggestions ?? []);
       _suggestionsBoxController?.open();
     }
@@ -391,6 +442,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       _suggestions = null;
       _suggestionsStreamController?.add([]);
     }
+    _updateHighlight(0);
     _suggestionsBoxController?.close();
   }
 
@@ -403,22 +455,22 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     });
   }
 
-  void selectSuggestion(T data) {
-    _suggestions = null;
-    _suggestionsStreamController?.add([]);
-    resetTextField();
-  }
-
   void _onSubmitted(String string) {
-    widget.onSubmitted?.call(string);
-    if (widget.resetTextOnSubmitted) {
-      resetTextField();
+    if (_suggestions?.isNotEmpty == true &&
+        _suggestionsBoxController?.isOpened == true) {
+      _selectOption();
+    } else {
+      widget.onSubmitted?.call(string);
+      if (widget.resetTextOnSubmitted) {
+        resetTextField();
+      }
     }
   }
 
   void resetTextField() {
     _textFieldController.text = '';
     _previousText = '';
+    _updateHighlight(0);
   }
 
   /// Shamelessly copied from [InputDecorator]
@@ -456,7 +508,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   void _onKeyboardBackspaceListener() async {
     if (_textFieldController.text.isEmpty && widget.length > 0) {
-      developer.log('TagsEditorState::_onKeyboardBackspaceListener():onDeleteTagAction called');
       widget.onDeleteTagAction?.call();
     }
   }
@@ -502,11 +553,17 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           LayoutId(
             id: TagEditorLayoutDelegate.textFieldId,
             child: RawKeyboardListener(
-              focusNode: FocusNode(),
+              focusNode: _focusNodeKeyboard,
               onKey: (event) {
                 if (event is RawKeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.backspace) {
+                    event.logicalKey == LogicalKeyboardKey.backspace) {
                   _onKeyboardBackspaceListener();
+                } else if (event is RawKeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                  _highlightNextOption();
+                } else if (event is RawKeyDownEvent &&
+                    event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                  _highlightPreviousOption();
                 }
               },
               child: TextField(

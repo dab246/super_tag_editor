@@ -102,17 +102,32 @@ class _MyHomePageState extends State<MyHomePage> {
                 inputFormatters: [
                   FilteringTextInputFormatter.deny(RegExp(r'[/\\]'))
                 ],
-                suggestionBuilder: (context, state, data) {
-                  return ListTile(
-                    key: ObjectKey(data),
-                    title: Text(data),
-                    onTap: () {
-                      setState(() {
-                        _values.add(data);
+                suggestionBuilder: (context, state, data, highlight) {
+                  return Text(data);
+                },
+                onDeleteTagAction: () {
+                  if (_values.isNotEmpty) {
+                    setState(() {
+                      final item = _values.removeLast();
+
+                      Future.delayed(const Duration(milliseconds: 10), () {
+                        _textEditingController.text = item;
+                        _textEditingController.value =
+                            _textEditingController.value.copyWith(
+                          text: item,
+                          selection: TextSelection(
+                            baseOffset: item.length,
+                            extentOffset: item.length,
+                          ),
+                        );
                       });
-                      state.selectSuggestion(data);
-                    },
-                  );
+                    });
+                  }
+                },
+                onSelectOptionAction: (item) {
+                  setState(() {
+                    _values.add(item);
+                  });
                 },
                 suggestionsBoxElevation: 10,
                 findSuggestions: (String query) {
