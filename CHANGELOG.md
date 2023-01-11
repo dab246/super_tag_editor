@@ -1,4 +1,8 @@
 
+# 0.0.3+4
+
+- Support press `keyboard` to `Delete` tag and `Move`, `Select` suggestion item
+
 # 0.0.3+3
 
 - Enable/Disable auto dispose `FocusNode`
