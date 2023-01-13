@@ -7,12 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:super_tag_editor/widgets/validation_suggestion_item.dart';
 
 import './tag_editor_layout_delegate.dart';
 import './tag_layout.dart';
 
-typedef SuggestionBuilder<T> = Widget Function(BuildContext context,
-    TagsEditorState<T> state, T data, int index, int lenght, bool highlight);
+typedef SuggestionBuilder<T> = Widget Function(
+    BuildContext context,
+    TagsEditorState<T> state,
+    T data,
+    int index,
+    int lenght,
+    bool highlight,
+    String? suggestionValid);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 typedef OnDeleteTagAction = Function();
@@ -193,6 +200,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   int _countBackspacePressed = 0;
   Debouncer<String>? _deBouncer;
   final ValueNotifier<int> _highlightedOptionIndex = ValueNotifier<int>(0);
+  final ValueNotifier<String?> _validationSuggestionItemNotifier =
+      ValueNotifier<String?>(null);
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
 
@@ -218,6 +227,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _focusNodeKeyboard.removeListener(_onFocusKeyboardChanged);
     _focusNodeKeyboard.dispose();
     _highlightedOptionIndex.dispose();
+    _validationSuggestionItemNotifier.dispose();
     super.dispose();
   }
 
@@ -243,6 +253,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       widget.onSelectOptionAction?.call(optionSelected);
       resetTextField();
     }
+  }
+
+  void _updateValidationSuggestionItem(String? value) {
+    _validationSuggestionItemNotifier.value = value;
   }
 
   void _initializeSuggestionBox() {
@@ -317,63 +331,71 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 final suggestionsListView = PointerInterceptor(
                   child: AutocompleteHighlightedOption(
                     highlightIndexNotifier: _highlightedOptionIndex,
-                    child: Padding(
-                      padding: widget.suggestionMargin ?? EdgeInsets.zero,
-                      child: Material(
-                        elevation: widget.suggestionsBoxElevation ?? 20,
-                        borderRadius: BorderRadius.circular(
-                            widget.suggestionsBoxRadius ?? 20),
-                        color: widget.suggestionsBoxBackgroundColor ??
-                            Colors.white,
-                        child: Container(
-                            decoration: BoxDecoration(
-                                color: widget.suggestionsBoxBackgroundColor ??
-                                    Colors.white,
-                                borderRadius: BorderRadius.all(Radius.circular(
-                                    widget.suggestionsBoxRadius ?? 0))),
-                            constraints:
-                                BoxConstraints(maxHeight: _suggestionBoxHeight),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              padding:
-                                  widget.suggestionPadding ?? EdgeInsets.zero,
-                              itemCount: snapshot.data!.length,
-                              itemBuilder: (context, index) {
-                                if (_suggestions != null &&
-                                    _suggestions?.isNotEmpty == true) {
-                                  final item = _suggestions![index];
-                                  final highlight =
-                                      AutocompleteHighlightedOption.of(
-                                              context) ==
-                                          index;
+                    child: ValidationSuggestionItem(
+                      validationNotifier: _validationSuggestionItemNotifier,
+                      child: Padding(
+                        padding: widget.suggestionMargin ?? EdgeInsets.zero,
+                        child: Material(
+                          elevation: widget.suggestionsBoxElevation ?? 20,
+                          borderRadius: BorderRadius.circular(
+                              widget.suggestionsBoxRadius ?? 20),
+                          color: widget.suggestionsBoxBackgroundColor ??
+                              Colors.white,
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  color: widget.suggestionsBoxBackgroundColor ??
+                                      Colors.white,
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(
+                                          widget.suggestionsBoxRadius ?? 0))),
+                              constraints: BoxConstraints(
+                                  maxHeight: _suggestionBoxHeight),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding:
+                                    widget.suggestionPadding ?? EdgeInsets.zero,
+                                itemCount: snapshot.data!.length,
+                                itemBuilder: (context, index) {
+                                  if (_suggestions != null &&
+                                      _suggestions?.isNotEmpty == true) {
+                                    final item = _suggestions![index];
+                                    final highlight =
+                                        AutocompleteHighlightedOption.of(
+                                                context) ==
+                                            index;
+                                    final suggestionValid =
+                                        ValidationSuggestionItem.of(context);
 
-                                  if (!widget.useDefaultHighlight) {
-                                    return widget.suggestionBuilder(
-                                        context,
-                                        this,
-                                        item,
-                                        index,
-                                        snapshot.data!.length,
-                                        highlight);
+                                    if (!widget.useDefaultHighlight) {
+                                      return widget.suggestionBuilder(
+                                          context,
+                                          this,
+                                          item,
+                                          index,
+                                          snapshot.data!.length,
+                                          highlight,
+                                          suggestionValid);
+                                    } else {
+                                      return Container(
+                                          color: highlight
+                                              ? widget.itemHighlightColor ??
+                                                  Theme.of(context).focusColor
+                                              : null,
+                                          child: widget.suggestionBuilder(
+                                              context,
+                                              this,
+                                              item,
+                                              index,
+                                              snapshot.data!.length,
+                                              highlight,
+                                              suggestionValid));
+                                    }
                                   } else {
-                                    return Container(
-                                        color: highlight
-                                            ? widget.itemHighlightColor ??
-                                                Theme.of(context).focusColor
-                                            : null,
-                                        child: widget.suggestionBuilder(
-                                            context,
-                                            this,
-                                            item,
-                                            index,
-                                            snapshot.data!.length,
-                                            highlight));
+                                    return Container();
                                   }
-                                } else {
-                                  return Container();
-                                }
-                              },
-                            )),
+                                },
+                              )),
+                        ),
                       ),
                     ),
                   ),
@@ -449,6 +471,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       setState(() => _suggestions = results);
     }
     _updateHighlight(0);
+    _updateValidationSuggestionItem(value);
     _suggestionsStreamController?.add(_suggestions ?? []);
     _suggestionsBoxController?.open();
   }
@@ -461,6 +484,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         setState(() => _suggestions = results);
       }
       _updateHighlight(0);
+      _updateValidationSuggestionItem(null);
       _suggestionsStreamController?.add(_suggestions ?? []);
       _suggestionsBoxController?.open();
     }
@@ -472,6 +496,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       _suggestionsStreamController?.add([]);
     }
     _updateHighlight(0);
+    _updateValidationSuggestionItem(null);
     _suggestionsBoxController?.close();
   }
 
@@ -500,6 +525,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _textFieldController.text = '';
     _previousText = '';
     _updateHighlight(0);
+    _updateValidationSuggestionItem(null);
   }
 
   /// Shamelessly copied from [InputDecorator]

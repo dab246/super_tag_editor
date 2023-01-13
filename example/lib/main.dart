@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:super_tag_editor/tag_editor.dart';
+import 'package:super_tag_editor/widgets/rich_text_widget.dart';
 
 void main() => runApp(MyApp());
 
@@ -109,8 +110,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   FilteringTextInputFormatter.deny(RegExp(r'[/\\]'))
                 ],
                 useDefaultHighlight: false,
-                suggestionBuilder:
-                    (context, state, data, index, length, highlight) {
+                suggestionBuilder: (context, state, data, index, length,
+                    highlight, suggestionValid) {
                   var borderRadius =
                       const BorderRadius.all(Radius.circular(20));
                   if (index == 0) {
@@ -131,7 +132,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               borderRadius: borderRadius)
                           : null,
                       padding: const EdgeInsets.all(16),
-                      child: Text(data));
+                      child: RichTextWidget(
+                        wordSearched: suggestionValid ?? '',
+                        textOrigin: data,
+                      ));
                 },
                 onFocusTagAction: (focused) {
                   setState(() {
