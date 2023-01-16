@@ -228,6 +228,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _focusNodeKeyboard.dispose();
     _highlightedOptionIndex.dispose();
     _validationSuggestionItemNotifier.dispose();
+    _deBouncer?.cancel();
     super.dispose();
   }
 
