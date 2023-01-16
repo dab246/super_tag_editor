@@ -341,60 +341,65 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                               widget.suggestionsBoxRadius ?? 20),
                           color: widget.suggestionsBoxBackgroundColor ??
                               Colors.white,
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  color: widget.suggestionsBoxBackgroundColor ??
-                                      Colors.white,
-                                  borderRadius: BorderRadius.all(
-                                      Radius.circular(
-                                          widget.suggestionsBoxRadius ?? 0))),
-                              constraints: BoxConstraints(
-                                  maxHeight: _suggestionBoxHeight),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                padding:
-                                    widget.suggestionPadding ?? EdgeInsets.zero,
-                                itemCount: snapshot.data!.length,
-                                itemBuilder: (context, index) {
-                                  if (_suggestions != null &&
-                                      _suggestions?.isNotEmpty == true) {
-                                    final item = _suggestions![index];
-                                    final highlight =
-                                        AutocompleteHighlightedOption.of(
-                                                context) ==
-                                            index;
-                                    final suggestionValid =
-                                        ValidationSuggestionItem.of(context);
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                                widget.suggestionsBoxRadius ?? 20),
+                            child: Container(
+                                decoration: BoxDecoration(
+                                    color:
+                                        widget.suggestionsBoxBackgroundColor ??
+                                            Colors.white,
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(
+                                            widget.suggestionsBoxRadius ?? 0))),
+                                constraints: BoxConstraints(
+                                    maxHeight: _suggestionBoxHeight),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  padding: widget.suggestionPadding ??
+                                      EdgeInsets.zero,
+                                  itemCount: snapshot.data!.length,
+                                  itemBuilder: (context, index) {
+                                    if (_suggestions != null &&
+                                        _suggestions?.isNotEmpty == true) {
+                                      final item = _suggestions![index];
+                                      final highlight =
+                                          AutocompleteHighlightedOption.of(
+                                                  context) ==
+                                              index;
+                                      final suggestionValid =
+                                          ValidationSuggestionItem.of(context);
 
-                                    if (!widget.useDefaultHighlight) {
-                                      return widget.suggestionBuilder(
-                                          context,
-                                          this,
-                                          item,
-                                          index,
-                                          snapshot.data!.length,
-                                          highlight,
-                                          suggestionValid);
+                                      if (!widget.useDefaultHighlight) {
+                                        return widget.suggestionBuilder(
+                                            context,
+                                            this,
+                                            item,
+                                            index,
+                                            snapshot.data!.length,
+                                            highlight,
+                                            suggestionValid);
+                                      } else {
+                                        return Container(
+                                            color: highlight
+                                                ? widget.itemHighlightColor ??
+                                                    Theme.of(context).focusColor
+                                                : null,
+                                            child: widget.suggestionBuilder(
+                                                context,
+                                                this,
+                                                item,
+                                                index,
+                                                snapshot.data!.length,
+                                                highlight,
+                                                suggestionValid));
+                                      }
                                     } else {
-                                      return Container(
-                                          color: highlight
-                                              ? widget.itemHighlightColor ??
-                                                  Theme.of(context).focusColor
-                                              : null,
-                                          child: widget.suggestionBuilder(
-                                              context,
-                                              this,
-                                              item,
-                                              index,
-                                              snapshot.data!.length,
-                                              highlight,
-                                              suggestionValid));
+                                      return Container();
                                     }
-                                  } else {
-                                    return Container();
-                                  }
-                                },
-                              )),
+                                  },
+                                )),
+                          ),
                         ),
                       ),
                     ),
