@@ -23,25 +23,38 @@ class RichTextWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-        maxLines: maxLines ?? 1,
-        softWrap: softWrap ?? kIsWeb ? false : true,
-        overflow:
-            overflow ?? (kIsWeb ? TextOverflow.fade : TextOverflow.ellipsis),
-        text: TextSpan(
-            style: styleTextOrigin ??
-                const TextStyle(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.normal),
-            children: _getSpans(
-                textOrigin,
-                wordSearched,
-                styleWordSearched ??
-                    const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold))));
+    if (wordSearched.isEmpty) {
+      return Text(textOrigin,
+          maxLines: maxLines ?? 1,
+          softWrap: softWrap ?? kIsWeb ? false : true,
+          overflow:
+              overflow ?? (kIsWeb ? TextOverflow.fade : TextOverflow.ellipsis),
+          style: styleTextOrigin ??
+              const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.normal));
+    } else {
+      return RichText(
+          maxLines: maxLines ?? 1,
+          softWrap: softWrap ?? kIsWeb ? false : true,
+          overflow:
+              overflow ?? (kIsWeb ? TextOverflow.fade : TextOverflow.ellipsis),
+          text: TextSpan(
+              style: styleTextOrigin ??
+                  const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal),
+              children: _getSpans(
+                  textOrigin,
+                  wordSearched,
+                  styleWordSearched ??
+                      const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold))));
+    }
   }
 
   List<TextSpan> _getSpans(String text, String matchWord, TextStyle style) {
