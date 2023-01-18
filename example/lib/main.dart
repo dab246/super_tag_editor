@@ -125,17 +125,26 @@ class _MyHomePageState extends State<MyHomePage> {
                       bottomLeft: Radius.circular(20),
                     );
                   }
-                  return Container(
-                      decoration: highlight
-                          ? BoxDecoration(
-                              color: Theme.of(context).focusColor,
-                              borderRadius: borderRadius)
-                          : null,
-                      padding: const EdgeInsets.all(16),
-                      child: RichTextWidget(
-                        wordSearched: suggestionValid ?? '',
-                        textOrigin: data,
-                      ));
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _values.add(data);
+                      });
+                      state.resetTextField();
+                      state.closeSuggestionBox();
+                    },
+                    child: Container(
+                        decoration: highlight
+                            ? BoxDecoration(
+                                color: Theme.of(context).focusColor,
+                                borderRadius: borderRadius)
+                            : null,
+                        padding: const EdgeInsets.all(16),
+                        child: RichTextWidget(
+                          wordSearched: suggestionValid ?? '',
+                          textOrigin: data,
+                        )),
+                  );
                 },
                 onFocusTagAction: (focused) {
                   setState(() {
