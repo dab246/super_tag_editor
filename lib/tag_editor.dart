@@ -253,6 +253,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       final optionSelected = _suggestions![currentHighlightIndex];
       widget.onSelectOptionAction?.call(optionSelected);
       resetTextField();
+      closeSuggestionBox();
     }
   }
 
