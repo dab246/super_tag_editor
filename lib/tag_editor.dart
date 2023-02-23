@@ -315,11 +315,11 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               mq.viewInsets.bottom -
               renderBoxOffset.dy -
               size.height;
-          var _suggestionBoxHeight =
+          var suggestionBoxHeight =
               max(topAvailableSpace, bottomAvailableSpace);
           if (null != widget.suggestionsBoxMaxHeight) {
-            _suggestionBoxHeight =
-                min(_suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
+            suggestionBoxHeight =
+                min(suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
           }
           final showTop = topAvailableSpace > bottomAvailableSpace;
           final compositedTransformFollowerOffset =
@@ -355,7 +355,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                                         Radius.circular(
                                             widget.suggestionsBoxRadius ?? 0))),
                                 constraints: BoxConstraints(
-                                    maxHeight: _suggestionBoxHeight),
+                                    maxHeight: suggestionBoxHeight),
                                 child: ListView.builder(
                                   shrinkWrap: true,
                                   padding: widget.suggestionPadding ??
@@ -511,7 +511,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     Future.delayed(const Duration(milliseconds: 300), () {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final renderBox = context.findRenderObject() as RenderBox;
-        await Scrollable.of(context)?.position.ensureVisible(renderBox);
+        await Scrollable.of(context).position.ensureVisible(renderBox);
       });
     });
   }
