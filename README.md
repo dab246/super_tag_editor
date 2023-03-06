@@ -1,14 +1,12 @@
 # Super Tag Editor
 
-A simple tag editor for inputting tags with suggestion box
+A simple tag editor for imported tags in Flutter.
 
-![image](https://user-images.githubusercontent.com/18391546/82047483-dc8f0f00-96ed-11ea-8a91-7eaa64e2358b.gif)
+Enhance:
+- Suggestion box
+- Validation
 
-#### Supported suggestion box
-Screen Shot 1         |    Screen Shot 2
-:-------------------------:|:-------------------------:
-!["Screen Shot 2022-03-01 at 15 36 31](https://user-images.githubusercontent.com/80730648/156135105-04d93fac-ef0d-4889-b24a-61a7b3b470e3.png)  |  ![Screen Shot 2022-03-01 at 15 36 40](https://user-images.githubusercontent.com/80730648/156135234-dcfc5416-abff-4c1e-bb8b-0a78e386710c.png))
-
+![image](https://user-images.githubusercontent.com/80730648/223016736-684771bb-4892-4707-954d-9fffc0c929b2.gif)
 
 ## Usage
 
