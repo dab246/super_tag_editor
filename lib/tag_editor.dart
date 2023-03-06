@@ -82,6 +82,7 @@ class TagEditor<T> extends StatefulWidget {
       this.onFocusTagAction,
       this.itemHighlightColor,
       this.useDefaultHighlight = true,
+      this.enableFocusAfterEnter = true,
       this.onSelectOptionAction})
       : super(key: key);
 
@@ -156,6 +157,7 @@ class TagEditor<T> extends StatefulWidget {
   final double? borderSize;
   final EdgeInsets? padding;
   final bool autoDisposeFocusNode;
+  final bool enableFocusAfterEnter;
 
   /// [SuggestionBox]'s properties.
   final double? suggestionsBoxMaxHeight;
@@ -525,6 +527,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       if (widget.resetTextOnSubmitted) {
         resetTextField();
       }
+    }
+    if (widget.enableFocusAfterEnter) {
+      _focusNode.requestFocus();
     }
   }
 

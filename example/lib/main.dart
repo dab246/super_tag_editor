@@ -187,7 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
               // or do whatever you want with it
               ElevatedButton(
                 onPressed: _onPressedModifyTextField,
-                child: const Text('Use Controlelr to Set Value'),
+                child: const Text('Use Controller to Set Value'),
               ),
             ],
           ),
