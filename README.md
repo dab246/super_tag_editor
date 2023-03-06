@@ -1,8 +1,8 @@
 # Super Tag Editor
 
-A simple tag editor for imported tags in Flutter.
+A simple tag editor for inputting tags in Flutter.
 
-Enhance:
+### Enhance:
 - Suggestion box
 - Validation
 
