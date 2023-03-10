@@ -415,12 +415,14 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                     link: _layerLink,
                     showWhenUnlinked: false,
                     offset: compositedTransformFollowerOffset,
-                    child: !showTop
+                    child: TextFieldTapRegion(
+                      child: !showTop
                         ? suggestionsListView
                         : FractionalTranslation(
                             translation: const Offset(0, -1),
                             child: suggestionsListView,
                           ),
+                    ),
                   ),
                 );
               }
