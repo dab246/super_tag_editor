@@ -1,4 +1,8 @@
 
+# 0.1.1
+
+- Tap event is not simulated in a overlay on Flutter version `3.7.x`
+
 # 0.1.0
 
 - Fix bugs
