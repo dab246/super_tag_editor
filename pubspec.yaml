@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  pointer_interceptor: ^0.9.3+4
+  pointer_interceptor: 0.9.1
 
   debounce_throttle: ^2.0.0
 
