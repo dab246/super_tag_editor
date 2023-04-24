@@ -1,4 +1,8 @@
 
+# 0.1.2
+
+- Fix tap event is not simulated in a overlay on Flutter `3.7.x` for Web/Desktop (Regression)
+
 # 0.1.1
 
 - Tap event is not simulated in a overlay on Flutter version `3.7.x`
