@@ -332,77 +332,82 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             initialData: _suggestions,
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final suggestionsListView = PointerInterceptor(
-                  child: AutocompleteHighlightedOption(
-                    highlightIndexNotifier: _highlightedOptionIndex,
-                    child: ValidationSuggestionItem(
-                      validationNotifier: _validationSuggestionItemNotifier,
-                      child: Padding(
-                        padding: widget.suggestionMargin ?? EdgeInsets.zero,
-                        child: Material(
-                          elevation: widget.suggestionsBoxElevation ?? 20,
-                          borderRadius: BorderRadius.circular(
-                              widget.suggestionsBoxRadius ?? 20),
-                          color: widget.suggestionsBoxBackgroundColor ??
-                              Colors.white,
-                          child: ClipRRect(
+                final suggestionsListView = TextFieldTapRegion(
+                  child: PointerInterceptor(
+                    child: AutocompleteHighlightedOption(
+                      highlightIndexNotifier: _highlightedOptionIndex,
+                      child: ValidationSuggestionItem(
+                        validationNotifier: _validationSuggestionItemNotifier,
+                        child: Padding(
+                          padding: widget.suggestionMargin ?? EdgeInsets.zero,
+                          child: Material(
+                            elevation: widget.suggestionsBoxElevation ?? 20,
                             borderRadius: BorderRadius.circular(
                                 widget.suggestionsBoxRadius ?? 20),
-                            child: Container(
-                                decoration: BoxDecoration(
-                                    color:
-                                        widget.suggestionsBoxBackgroundColor ??
-                                            Colors.white,
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(
-                                            widget.suggestionsBoxRadius ?? 0))),
-                                constraints: BoxConstraints(
-                                    maxHeight: suggestionBoxHeight),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  padding: widget.suggestionPadding ??
-                                      EdgeInsets.zero,
-                                  itemCount: snapshot.data!.length,
-                                  itemBuilder: (context, index) {
-                                    if (_suggestions != null &&
-                                        _suggestions?.isNotEmpty == true) {
-                                      final item = _suggestions![index];
-                                      final highlight =
-                                          AutocompleteHighlightedOption.of(
-                                                  context) ==
-                                              index;
-                                      final suggestionValid =
-                                          ValidationSuggestionItem.of(context);
+                            color: widget.suggestionsBoxBackgroundColor ??
+                                Colors.white,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                  widget.suggestionsBoxRadius ?? 20),
+                              child: Container(
+                                  decoration: BoxDecoration(
+                                      color: widget
+                                              .suggestionsBoxBackgroundColor ??
+                                          Colors.white,
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(
+                                              widget.suggestionsBoxRadius ??
+                                                  0))),
+                                  constraints: BoxConstraints(
+                                      maxHeight: suggestionBoxHeight),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    padding: widget.suggestionPadding ??
+                                        EdgeInsets.zero,
+                                    itemCount: snapshot.data!.length,
+                                    itemBuilder: (context, index) {
+                                      if (_suggestions != null &&
+                                          _suggestions?.isNotEmpty == true) {
+                                        final item = _suggestions![index];
+                                        final highlight =
+                                            AutocompleteHighlightedOption.of(
+                                                    context) ==
+                                                index;
+                                        final suggestionValid =
+                                            ValidationSuggestionItem.of(
+                                                context);
 
-                                      if (!widget.useDefaultHighlight) {
-                                        return widget.suggestionBuilder(
-                                            context,
-                                            this,
-                                            item,
-                                            index,
-                                            snapshot.data!.length,
-                                            highlight,
-                                            suggestionValid);
+                                        if (!widget.useDefaultHighlight) {
+                                          return widget.suggestionBuilder(
+                                              context,
+                                              this,
+                                              item,
+                                              index,
+                                              snapshot.data!.length,
+                                              highlight,
+                                              suggestionValid);
+                                        } else {
+                                          return Container(
+                                              color: highlight
+                                                  ? widget.itemHighlightColor ??
+                                                      Theme.of(context)
+                                                          .focusColor
+                                                  : null,
+                                              child: widget.suggestionBuilder(
+                                                  context,
+                                                  this,
+                                                  item,
+                                                  index,
+                                                  snapshot.data!.length,
+                                                  highlight,
+                                                  suggestionValid));
+                                        }
                                       } else {
-                                        return Container(
-                                            color: highlight
-                                                ? widget.itemHighlightColor ??
-                                                    Theme.of(context).focusColor
-                                                : null,
-                                            child: widget.suggestionBuilder(
-                                                context,
-                                                this,
-                                                item,
-                                                index,
-                                                snapshot.data!.length,
-                                                highlight,
-                                                suggestionValid));
+                                        return Container();
                                       }
-                                    } else {
-                                      return Container();
-                                    }
-                                  },
-                                )),
+                                    },
+                                  )),
+                            ),
                           ),
                         ),
                       ),
@@ -415,14 +420,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                     link: _layerLink,
                     showWhenUnlinked: false,
                     offset: compositedTransformFollowerOffset,
-                    child: TextFieldTapRegion(
-                      child: !showTop
+                    child: !showTop
                         ? suggestionsListView
                         : FractionalTranslation(
                             translation: const Offset(0, -1),
                             child: suggestionsListView,
                           ),
-                    ),
                   ),
                 );
               }
