@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:super_tag_editor/utils/direction_helper.dart';
 import 'package:super_tag_editor/widgets/validation_suggestion_item.dart';
 
 import './tag_editor_layout_delegate.dart';
@@ -183,6 +184,7 @@ class TagEditor<T> extends StatefulWidget {
 class TagsEditorState<T> extends State<TagEditor<T>> {
   /// A controller to keep value of the [TextField].
   late TextEditingController _textFieldController;
+  late TextDirection _textDirection;
 
   /// A state variable for checking if new text is enter.
   var _previousText = '';
@@ -211,6 +213,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void initState() {
     super.initState();
     _textFieldController = (widget.controller ?? TextEditingController());
+    _textDirection = widget.textDirection ?? TextDirection.ltr;
     _focusNodeKeyboard = FocusNode()..addListener(_onFocusKeyboardChanged);
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
@@ -603,7 +606,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final decoration = widget.hasAddButton
+    final decoration = widget.hasAddButton && widget.icon == null
         ? widget.inputDecoration.copyWith(
             suffixIcon: CupertinoButton(
             padding: EdgeInsets.zero,
@@ -667,13 +670,23 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 cursorColor: widget.cursorColor,
                 autocorrect: widget.autocorrect,
                 textAlign: widget.textAlign,
-                textDirection: widget.textDirection,
+                textDirection: _textDirection,
                 readOnly: widget.readOnly,
                 autofocus: widget.autofocus,
                 enableSuggestions: widget.enableSuggestions,
                 maxLines: widget.maxLines,
                 decoration: decoration,
-                onChanged: _onTextFieldChange,
+                onChanged: (value) {
+                  _onTextFieldChange.call(value);
+                  if (value.isNotEmpty) {
+                    final directionByText = DirectionHelper.getDirectionByEndsText(value);
+                    if (directionByText != _textDirection) {
+                      setState(() {
+                        _textDirection = directionByText;
+                      });
+                    }
+                  }
+                },
                 onSubmitted: _onSubmitted,
                 inputFormatters: widget.inputFormatters,
               ),
