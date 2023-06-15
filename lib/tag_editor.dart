@@ -679,7 +679,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 onChanged: (value) {
                   _onTextFieldChange.call(value);
                   if (value.isNotEmpty) {
-                    final directionByText = DirectionHelper.getDirectionByEndsText(value);
+                    final directionByText =
+                        DirectionHelper.getDirectionByEndsText(value);
                     if (directionByText != _textDirection) {
                       setState(() {
                         _textDirection = directionByText;

@@ -1,4 +1,8 @@
 
+# 0.1.3
+
+- Support RTL mode
+
 # 0.1.2
 
 - Fix tap event is not simulated in a overlay on Flutter `3.7.x` for Web/Desktop (Regression)
