@@ -1,3 +1,6 @@
+# 0.1.4
+
+- Compatible with Flutter version `v3.10.x`
 
 # 0.1.3
 
