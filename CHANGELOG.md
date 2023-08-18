@@ -1,4 +1,8 @@
 
+# 0.2.0
+
+- Compatible with flutter version `v3.10.6`
+
 # 0.1.3
 
 - Support RTL mode
