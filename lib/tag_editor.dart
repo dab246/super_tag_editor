@@ -84,6 +84,7 @@ class TagEditor<T> extends StatefulWidget {
       this.itemHighlightColor,
       this.useDefaultHighlight = true,
       this.enableFocusAfterEnter = true,
+      this.enableBorder = false,
       this.onSelectOptionAction})
       : super(key: key);
 
@@ -130,6 +131,9 @@ class TagEditor<T> extends StatefulWidget {
 
   final OnDeleteTagAction? onDeleteTagAction;
   final OnFocusTagAction? onFocusTagAction;
+
+  /// Enable border layout tab
+  final bool enableBorder;
 
   /// [TextField]'s properties.
   ///
@@ -617,16 +621,22 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           ))
         : widget.inputDecoration;
 
+    final borderSize =
+        widget.borderSize ?? ((_isFocused || widget.enableBorder) ? 1 : 0.5);
+    var borderColor = Colors.transparent;
+    if (widget.enableBorder) {
+      borderColor = widget.enableBorderColor ?? Colors.transparent;
+    }
+    if (_isFocused) {
+      borderColor = widget.focusedBorderColor ?? Colors.transparent;
+    }
+    final borderRadius = widget.borderRadius ?? 0;
+
     final tagEditorArea = Container(
       padding: widget.padding ?? EdgeInsets.zero,
       decoration: BoxDecoration(
-          borderRadius:
-              BorderRadius.all(Radius.circular(widget.borderRadius ?? 0)),
-          border: Border.all(
-              width: widget.borderSize ?? (_isFocused ? 1 : 0.5),
-              color: _isFocused
-                  ? widget.focusedBorderColor ?? Colors.transparent
-                  : widget.enableBorderColor ?? Colors.transparent),
+          borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+          border: Border.all(width: borderSize, color: borderColor),
           color: widget.backgroundColor ?? Colors.transparent),
       child: TagLayout(
         delegate: TagEditorLayoutDelegate(
