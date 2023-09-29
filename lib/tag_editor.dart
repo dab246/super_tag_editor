@@ -77,6 +77,7 @@ class TagEditor<T> extends StatefulWidget {
       this.borderSize,
       this.padding,
       this.suggestionPadding,
+      this.suggestionBoxWidth,
       this.autoDisposeFocusNode = true,
       this.suggestionMargin,
       this.onDeleteTagAction,
@@ -180,6 +181,7 @@ class TagEditor<T> extends StatefulWidget {
   final EdgeInsets? suggestionMargin;
   final EdgeInsets? suggestionPadding;
   final bool useDefaultHighlight;
+  final double? suggestionBoxWidth;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -422,7 +424,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                   ),
                 );
                 return Positioned(
-                  width: size.width,
+                  width: widget.suggestionBoxWidth ?? size.width,
                   child: CompositedTransformFollower(
                     link: _layerLink,
                     showWhenUnlinked: false,
