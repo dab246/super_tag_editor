@@ -82,6 +82,7 @@ class TagEditor<T> extends StatefulWidget {
       this.suggestionMargin,
       this.onDeleteTagAction,
       this.onFocusTagAction,
+      this.onTapOutside,
       this.itemHighlightColor,
       this.useDefaultHighlight = true,
       this.enableFocusAfterEnter = true,
@@ -164,6 +165,7 @@ class TagEditor<T> extends StatefulWidget {
   final EdgeInsets? padding;
   final bool autoDisposeFocusNode;
   final bool enableFocusAfterEnter;
+  final TapRegionCallback? onTapOutside;
 
   /// [SuggestionBox]'s properties.
   final double? suggestionsBoxMaxHeight;
@@ -702,6 +704,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 },
                 onSubmitted: _onSubmitted,
                 inputFormatters: widget.inputFormatters,
+                onTapOutside: widget.onTapOutside,
               ),
             ),
           )
