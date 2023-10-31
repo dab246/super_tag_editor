@@ -80,6 +80,7 @@ class TagEditor<T> extends StatefulWidget {
       this.suggestionBoxWidth,
       this.autoDisposeFocusNode = true,
       this.suggestionMargin,
+      this.suggestionItemHeight,
       this.onDeleteTagAction,
       this.onFocusTagAction,
       this.onTapOutside,
@@ -184,6 +185,7 @@ class TagEditor<T> extends StatefulWidget {
   final EdgeInsets? suggestionPadding;
   final bool useDefaultHighlight;
   final double? suggestionBoxWidth;
+  final double? suggestionItemHeight;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -332,11 +334,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               max(topAvailableSpace, bottomAvailableSpace);
           if (null != widget.suggestionsBoxMaxHeight) {
             suggestionBoxHeight =
-                min(suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
+                max(suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
           }
           final showTop = topAvailableSpace > bottomAvailableSpace;
-          final compositedTransformFollowerOffset =
-              showTop ? Offset(0, -size.height) : Offset.zero;
 
           return StreamBuilder<List<T>?>(
             stream: _suggestionsStreamController?.stream,
@@ -425,18 +425,22 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                     ),
                   ),
                 );
+
+                final heightSuggestion = (widget.suggestionItemHeight ?? 50) *
+                    (snapshot.data!.length);
+                final offsetY = min(heightSuggestion, suggestionBoxHeight);
+                final compositedTransformFollowerOffset = showTop
+                    ? Offset(0,
+                        -1.0 * (offsetY + (widget.suggestionItemHeight ?? 50)))
+                    : Offset.zero;
+
                 return Positioned(
                   width: widget.suggestionBoxWidth ?? size.width,
                   child: CompositedTransformFollower(
                     link: _layerLink,
                     showWhenUnlinked: false,
                     offset: compositedTransformFollowerOffset,
-                    child: !showTop
-                        ? suggestionsListView
-                        : FractionalTranslation(
-                            translation: const Offset(0, -1),
-                            child: suggestionsListView,
-                          ),
+                    child: suggestionsListView,
                   ),
                 );
               }
