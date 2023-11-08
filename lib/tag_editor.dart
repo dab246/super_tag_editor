@@ -26,6 +26,7 @@ typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 typedef OnDeleteTagAction = Function();
 typedef OnFocusTagAction = Function(bool focused);
 typedef OnSelectOptionAction<T> = Function(T data);
+typedef OnHandleKeyEventAction = Function(RawKeyEvent event);
 
 /// A [Widget] for editing tag similar to Google's Gmail
 /// email address input widget in the iOS app.
@@ -40,6 +41,8 @@ class TagEditor<T> extends StatefulWidget {
       required this.findSuggestions,
       Key? key,
       this.focusNode,
+      this.focusNodeKeyboard,
+      this.onHandleKeyEventAction,
       this.hasAddButton = true,
       this.delimiters = const [],
       this.icon,
@@ -131,6 +134,10 @@ class TagEditor<T> extends StatefulWidget {
 
   /// Focus node for checking if the [TextField] is focused.
   final FocusNode? focusNode;
+
+  /// Focus node for KeyboardRawListener.
+  final FocusNode? focusNodeKeyboard;
+  final OnHandleKeyEventAction? onHandleKeyEventAction;
 
   final OnDeleteTagAction? onDeleteTagAction;
   final OnFocusTagAction? onFocusTagAction;
@@ -224,7 +231,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     super.initState();
     _textFieldController = (widget.controller ?? TextEditingController());
     _textDirection = widget.textDirection ?? TextDirection.ltr;
-    _focusNodeKeyboard = FocusNode()..addListener(_onFocusKeyboardChanged);
+    _focusNodeKeyboard = (widget.focusNodeKeyboard ?? FocusNode())
+      ..addListener(_onFocusKeyboardChanged);
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
 
@@ -233,14 +241,16 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
     if (widget.autoDisposeFocusNode || widget.focusNode == null) {
-      _focusNode.removeListener(_onFocusChanged);
       _focusNode.dispose();
     }
     _suggestionsStreamController?.close();
     _suggestionsBoxController?.close();
     _focusNodeKeyboard.removeListener(_onFocusKeyboardChanged);
-    _focusNodeKeyboard.dispose();
+    if (widget.focusNodeKeyboard == null) {
+      _focusNodeKeyboard.dispose();
+    }
     _highlightedOptionIndex.dispose();
     _validationSuggestionItemNotifier.dispose();
     _deBouncer?.cancel();
@@ -665,15 +675,22 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             child: RawKeyboardListener(
               focusNode: _focusNodeKeyboard,
               onKey: (event) {
-                if (event is RawKeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.backspace) {
-                  _onKeyboardBackspaceListener();
-                } else if (event is RawKeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                  _highlightNextOption();
-                } else if (event is RawKeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.arrowUp) {
-                  _highlightPreviousOption();
+                widget.onHandleKeyEventAction?.call(event);
+
+                if (event is RawKeyDownEvent) {
+                  switch (event.logicalKey) {
+                    case LogicalKeyboardKey.backspace:
+                      _onKeyboardBackspaceListener();
+                      break;
+                    case LogicalKeyboardKey.arrowDown:
+                      _highlightNextOption();
+                      break;
+                    case LogicalKeyboardKey.arrowUp:
+                      _highlightPreviousOption();
+                      break;
+                    default:
+                      break;
+                  }
                 }
               },
               child: TextField(
