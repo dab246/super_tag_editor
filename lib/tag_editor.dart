@@ -81,7 +81,6 @@ class TagEditor<T> extends StatefulWidget {
       this.padding,
       this.suggestionPadding,
       this.suggestionBoxWidth,
-      this.autoDisposeFocusNode = true,
       this.suggestionMargin,
       this.suggestionItemHeight,
       this.onDeleteTagAction,
@@ -171,7 +170,6 @@ class TagEditor<T> extends StatefulWidget {
   final double? borderRadius;
   final double? borderSize;
   final EdgeInsets? padding;
-  final bool autoDisposeFocusNode;
   final bool enableFocusAfterEnter;
   final TapRegionCallback? onTapOutside;
 
@@ -242,7 +240,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   @override
   void dispose() {
     _focusNode.removeListener(_onFocusChanged);
-    if (widget.autoDisposeFocusNode || widget.focusNode == null) {
+    if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     _suggestionsStreamController?.close();
