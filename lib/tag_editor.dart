@@ -43,7 +43,7 @@ class TagEditor<T> extends StatefulWidget {
       this.focusNode,
       this.focusNodeKeyboard,
       this.onHandleKeyEventAction,
-      this.hasAddButton = true,
+      this.hasAddButton = false,
       this.delimiters = const [],
       this.icon,
       this.enabled = true,
