@@ -475,7 +475,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     }
 
     final previousText = _previousText;
-    _previousText = string;
+
+    setState(() {
+      _previousText = string;
+    });
 
     if (string.isEmpty || widget.delimiters.isEmpty) {
       return;
@@ -624,6 +627,19 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     }
   }
 
+  double _getTextWidth(String text, {TextStyle? textStyle}) {
+    final textSpan = TextSpan(
+      text: text,
+      style: textStyle, // Make optional to subtitle1
+    );
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    return textPainter.width;
+  }
+
   @override
   Widget build(BuildContext context) {
     final decoration = widget.hasAddButton && widget.icon == null
@@ -648,6 +664,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     }
     final borderRadius = widget.borderRadius ?? 0;
 
+    //* TextField use titleMedium for default style
+    final defaultTextFieldTextStyle = Theme.of(context).textTheme.titleMedium;
+    final textStyle = widget.textStyle?.fontSize == null
+      ? widget.textStyle?.copyWith(fontSize: defaultTextFieldTextStyle?.fontSize)
+      : widget.textStyle?.copyWith();
+
     final tagEditorArea = Container(
       padding: widget.padding ?? EdgeInsets.zero,
       decoration: BoxDecoration(
@@ -659,6 +681,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           length: widget.length,
           minTextFieldWidth: widget.minTextFieldWidth,
           spacing: widget.tagSpacing,
+          textWidth: _getTextWidth(_previousText, textStyle: textStyle),
         ),
         children: [
           ...List<Widget>.generate(
@@ -692,7 +715,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 }
               },
               child: TextField(
-                style: widget.textStyle,
+                style: textStyle,
                 focusNode: _focusNode,
                 enabled: widget.enabled,
                 controller: _textFieldController,
