@@ -90,6 +90,7 @@ class TagEditor<T> extends StatefulWidget {
       this.useDefaultHighlight = true,
       this.enableFocusAfterEnter = true,
       this.enableBorder = false,
+      this.autoScrollToInput = true,
       this.onSelectOptionAction})
       : super(key: key);
 
@@ -143,6 +144,9 @@ class TagEditor<T> extends StatefulWidget {
 
   /// Enable border layout tab
   final bool enableBorder;
+
+  /// Enable automatic scrolling to the currently focused input
+  final bool autoScrollToInput;
 
   /// [TextField]'s properties.
   ///
@@ -303,7 +307,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     if (_focusNode.hasFocus) {
       widget.onFocusTagAction?.call(false);
       _countBackspacePressed = 0;
-      _scrollToVisible();
+      if (widget.autoScrollToInput) {
+        _scrollToVisible();
+      }
       _suggestionsBoxController?.open();
     } else {
       _suggestionsBoxController?.close();
