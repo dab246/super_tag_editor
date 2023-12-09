@@ -5,22 +5,16 @@ import 'package:debounce_throttle/debounce_throttle.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:super_tag_editor/utils/direction_helper.dart';
 import 'package:super_tag_editor/widgets/validation_suggestion_item.dart';
 
 import './tag_editor_layout_delegate.dart';
 import './tag_layout.dart';
 
-typedef SuggestionBuilder<T> = Widget Function(
-    BuildContext context,
-    TagsEditorState<T> state,
-    T data,
-    int index,
-    int lenght,
-    bool highlight,
-    String? suggestionValid);
+typedef SuggestionBuilder<T> = Widget Function(BuildContext context, TagsEditorState<T> state,
+    T data, int index, int lenght, bool highlight, String? suggestionValid);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 typedef OnDeleteTagAction = Function();
@@ -225,8 +219,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   int _countBackspacePressed = 0;
   Debouncer<String>? _deBouncer;
   final ValueNotifier<int> _highlightedOptionIndex = ValueNotifier<int>(0);
-  final ValueNotifier<String?> _validationSuggestionItemNotifier =
-      ValueNotifier<String?>(null);
+  final ValueNotifier<String?> _validationSuggestionItemNotifier = ValueNotifier<String?>(null);
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
 
@@ -237,8 +230,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _textDirection = widget.textDirection ?? TextDirection.ltr;
     _focusNodeKeyboard = (widget.focusNodeKeyboard ?? FocusNode())
       ..addListener(_onFocusKeyboardChanged);
-    _focusNode = (widget.focusNode ?? FocusNode())
-      ..addListener(_onFocusChanged);
+    _focusNode = (widget.focusNode ?? FocusNode())..addListener(_onFocusChanged);
 
     if (widget.activateSuggestionBox) _initializeSuggestionBox();
   }
@@ -291,8 +283,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void _initializeSuggestionBox() {
-    _deBouncer = Debouncer<String>(
-        widget.debounceDuration ?? const Duration(milliseconds: 300),
+    _deBouncer = Debouncer<String>(widget.debounceDuration ?? const Duration(milliseconds: 300),
         initialValue: '');
 
     _deBouncer?.values.listen(_onSearchChanged);
@@ -342,15 +333,11 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           final renderBoxOffset = renderBox!.localToGlobal(Offset.zero);
           final topAvailableSpace = renderBoxOffset.dy;
           final mq = MediaQuery.of(context);
-          final bottomAvailableSpace = mq.size.height -
-              mq.viewInsets.bottom -
-              renderBoxOffset.dy -
-              size.height;
-          var suggestionBoxHeight =
-              max(topAvailableSpace, bottomAvailableSpace);
+          final bottomAvailableSpace =
+              mq.size.height - mq.viewInsets.bottom - renderBoxOffset.dy - size.height;
+          var suggestionBoxHeight = max(topAvailableSpace, bottomAvailableSpace);
           if (null != widget.suggestionsBoxMaxHeight) {
-            suggestionBoxHeight =
-                max(suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
+            suggestionBoxHeight = max(suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
           }
           final showTop = topAvailableSpace > bottomAvailableSpace;
 
@@ -369,40 +356,29 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                           padding: widget.suggestionMargin ?? EdgeInsets.zero,
                           child: Material(
                             elevation: widget.suggestionsBoxElevation ?? 20,
-                            borderRadius: BorderRadius.circular(
-                                widget.suggestionsBoxRadius ?? 20),
-                            color: widget.suggestionsBoxBackgroundColor ??
-                                Colors.white,
+                            borderRadius: BorderRadius.circular(widget.suggestionsBoxRadius ?? 20),
+                            color: widget.suggestionsBoxBackgroundColor ?? Colors.white,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                  widget.suggestionsBoxRadius ?? 20),
+                              borderRadius:
+                                  BorderRadius.circular(widget.suggestionsBoxRadius ?? 20),
                               child: Container(
                                   decoration: BoxDecoration(
-                                      color: widget
-                                              .suggestionsBoxBackgroundColor ??
-                                          Colors.white,
+                                      color: widget.suggestionsBoxBackgroundColor ?? Colors.white,
                                       borderRadius: BorderRadius.all(
-                                          Radius.circular(
-                                              widget.suggestionsBoxRadius ??
-                                                  0))),
-                                  constraints: BoxConstraints(
-                                      maxHeight: suggestionBoxHeight),
+                                          Radius.circular(widget.suggestionsBoxRadius ?? 0))),
+                                  constraints: BoxConstraints(maxHeight: suggestionBoxHeight),
                                   child: ListView.builder(
                                     shrinkWrap: true,
-                                    padding: widget.suggestionPadding ??
-                                        EdgeInsets.zero,
+                                    padding: widget.suggestionPadding ?? EdgeInsets.zero,
                                     itemCount: snapshot.data!.length,
                                     itemBuilder: (context, index) {
                                       if (_suggestions != null &&
                                           _suggestions?.isNotEmpty == true) {
                                         final item = _suggestions![index];
                                         final highlight =
-                                            AutocompleteHighlightedOption.of(
-                                                    context) ==
-                                                index;
+                                            AutocompleteHighlightedOption.of(context) == index;
                                         final suggestionValid =
-                                            ValidationSuggestionItem.of(
-                                                context);
+                                            ValidationSuggestionItem.of(context);
 
                                         if (!widget.useDefaultHighlight) {
                                           return widget.suggestionBuilder(
@@ -417,8 +393,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                                           return Container(
                                               color: highlight
                                                   ? widget.itemHighlightColor ??
-                                                      Theme.of(context)
-                                                          .focusColor
+                                                      Theme.of(context).focusColor
                                                   : null,
                                               child: widget.suggestionBuilder(
                                                   context,
@@ -442,12 +417,11 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                   ),
                 );
 
-                final heightSuggestion = (widget.suggestionItemHeight ?? 50) *
-                    (snapshot.data!.length);
+                final heightSuggestion =
+                    (widget.suggestionItemHeight ?? 50) * (snapshot.data!.length);
                 final offsetY = min(heightSuggestion, suggestionBoxHeight);
                 final compositedTransformFollowerOffset = showTop
-                    ? Offset(0,
-                        -1.0 * (offsetY + (widget.suggestionItemHeight ?? 50)))
+                    ? Offset(0, -1.0 * (offsetY + (widget.suggestionItemHeight ?? 50)))
                     : Offset.zero;
 
                 return Positioned(
@@ -558,8 +532,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void _onSubmitted(String string) {
-    if (_suggestions?.isNotEmpty == true &&
-        _suggestionsBoxController?.isOpened == true) {
+    if (_suggestions?.isNotEmpty == true && _suggestionsBoxController?.isOpened == true) {
       _selectOption();
     } else {
       widget.onSubmitted?.call(string);
@@ -573,8 +546,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void resetTextField() {
-    _textFieldController.text = '';
-    _previousText = '';
+    _textFieldController.text = '\u200b';
+    _previousText = '\u200b';
     _updateHighlight(0);
     _updateValidationSuggestionItem(null);
   }
@@ -661,8 +634,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           ))
         : widget.inputDecoration;
 
-    final borderSize =
-        widget.borderSize ?? ((_isFocused || widget.enableBorder) ? 1 : 0.5);
+    final borderSize = widget.borderSize ?? ((_isFocused || widget.enableBorder) ? 1 : 0.5);
     var borderColor = Colors.transparent;
     if (widget.enableBorder) {
       borderColor = widget.enableBorderColor ?? Colors.transparent;
@@ -675,8 +647,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     //* TextField use titleMedium for default style
     final defaultTextFieldTextStyle = Theme.of(context).textTheme.titleMedium;
     final textStyle = widget.textStyle?.fontSize == null
-      ? widget.textStyle?.copyWith(fontSize: defaultTextFieldTextStyle?.fontSize)
-      : widget.textStyle?.copyWith();
+        ? widget.textStyle?.copyWith(fontSize: defaultTextFieldTextStyle?.fontSize)
+        : widget.textStyle?.copyWith();
 
     final tagEditorArea = Container(
       padding: widget.padding ?? EdgeInsets.zero,
@@ -744,8 +716,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 onChanged: (value) {
                   _onTextFieldChange.call(value);
                   if (value.isNotEmpty) {
-                    final directionByText =
-                        DirectionHelper.getDirectionByEndsText(value);
+                    final directionByText = DirectionHelper.getDirectionByEndsText(value);
                     if (directionByText != _textDirection) {
                       setState(() {
                         _textDirection = directionByText;
