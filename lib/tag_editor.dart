@@ -60,6 +60,7 @@ class TagEditor<T> extends StatefulWidget {
       this.autocorrect = false,
       this.enableSuggestions = true,
       this.maxLines = 1,
+      this.minLines = 1,
       this.resetTextOnSubmitted = false,
       this.onSubmitted,
       this.inputFormatters,
@@ -164,6 +165,7 @@ class TagEditor<T> extends StatefulWidget {
   final bool autocorrect;
   final bool enableSuggestions;
   final int maxLines;
+  final int minLines;
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
   final Brightness? keyboardAppearance;
@@ -737,6 +739,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                 autofocus: widget.autofocus,
                 enableSuggestions: widget.enableSuggestions,
                 maxLines: widget.maxLines,
+                minLines: widget.minLines,
                 decoration: decoration,
                 onChanged: (value) {
                   _onTextFieldChange.call(value);
