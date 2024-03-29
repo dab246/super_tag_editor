@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -41,6 +42,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _textEditingController = TextEditingController();
   bool focusTagEnabled = false;
 
+  FocusNode? _focusNodeKeyboard;
+
   _onDelete(index) {
     setState(() {
       _values.removeAt(index);
@@ -62,6 +65,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      _focusNodeKeyboard = FocusNode();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -76,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 length: _values.length,
                 controller: _textEditingController,
                 focusNode: _focusNode,
+                focusNodeKeyboard: _focusNodeKeyboard,
                 delimiters: [',', ' '],
                 hasAddButton: true,
                 resetTextOnSubmitted: true,
@@ -194,6 +206,14 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _focusNodeKeyboard?.dispose();
+    _textEditingController.dispose();
+    super.dispose();
   }
 }
 

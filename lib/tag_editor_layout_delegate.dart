@@ -96,11 +96,11 @@ class TagEditorLayoutDelegate extends MultiChildLayoutDelegate {
       //* Check if Textbox is overflowing
       //* Check if overflowing
       if (_isOverflow(
-        childWidth: textFieldWidth,
-        parentWidth: size.width,
-        tagSizes: tagSizes,
-        spacing: spacing,
-      ) ||
+            childWidth: textFieldWidth,
+            parentWidth: size.width,
+            tagSizes: tagSizes,
+            spacing: spacing,
+          ) ||
           // * is the Text in TextField overflowing
           ((textWidth ?? 0) > leftOverWidth) && tagSizes.isNotEmpty) {
         textFieldSize = layoutChild(

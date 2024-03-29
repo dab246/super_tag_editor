@@ -213,7 +213,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   /// Focus node for checking if the [TextField] is focused.
   late FocusNode _focusNode;
-  late FocusNode _focusNodeKeyboard;
 
   StreamController<List<T>?>? _suggestionsStreamController;
   SuggestionsBoxController? _suggestionsBoxController;
@@ -233,10 +232,13 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     super.initState();
     _textFieldController = (widget.controller ?? TextEditingController());
     _textDirection = widget.textDirection ?? TextDirection.ltr;
-    _focusNodeKeyboard = (widget.focusNodeKeyboard ?? FocusNode())
-      ..addListener(_onFocusKeyboardChanged);
+
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
+
+    if (widget.focusNodeKeyboard != null) {
+      widget.focusNodeKeyboard!.addListener(_onFocusKeyboardChanged);
+    }
 
     if (widget.activateSuggestionBox) _initializeSuggestionBox();
   }
@@ -244,15 +246,14 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   @override
   void dispose() {
     _focusNode.removeListener(_onFocusChanged);
+    if (widget.focusNodeKeyboard != null) {
+      widget.focusNodeKeyboard!.removeListener(_onFocusKeyboardChanged);
+    }
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     _suggestionsStreamController?.close();
     _suggestionsBoxController?.close();
-    _focusNodeKeyboard.removeListener(_onFocusKeyboardChanged);
-    if (widget.focusNodeKeyboard == null) {
-      _focusNodeKeyboard.dispose();
-    }
     _highlightedOptionIndex.dispose();
     _validationSuggestionItemNotifier.dispose();
     _deBouncer?.cancel();
@@ -305,8 +306,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   void _onFocusChanged() {
     if (_focusNode.hasFocus) {
-      widget.onFocusTagAction?.call(false);
-      _countBackspacePressed = 0;
+      if (widget.focusNodeKeyboard != null) {
+        widget.onFocusTagAction?.call(false);
+        _countBackspacePressed = 0;
+      }
       if (widget.autoScrollToInput) {
         _scrollToVisible();
       }
@@ -323,7 +326,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void _onFocusKeyboardChanged() {
-    if (_focusNodeKeyboard.hasFocus) {
+    if (widget.focusNodeKeyboard?.hasFocus == true) {
       widget.onFocusTagAction?.call(true);
       _countBackspacePressed = 1;
     } else {
@@ -616,19 +619,19 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
       if (_countBackspacePressed == 1) {
         _focusNode.unfocus();
-        _focusNodeKeyboard.requestFocus();
+        widget.focusNodeKeyboard?.requestFocus();
       } else if (_countBackspacePressed >= 2) {
         widget.onDeleteTagAction?.call();
         if (widget.length > 1) {
           _countBackspacePressed = 1;
         } else {
           _countBackspacePressed = 0;
-          _focusNodeKeyboard.unfocus();
+          widget.focusNodeKeyboard?.unfocus();
           _focusNode.requestFocus();
         }
       }
     } else {
-      _focusNodeKeyboard.unfocus();
+      widget.focusNodeKeyboard?.unfocus();
       _focusNode.requestFocus();
     }
   }
@@ -644,6 +647,26 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     );
     textPainter.layout();
     return textPainter.width;
+  }
+
+  void _handleKeyboardEvent(RawKeyEvent event) {
+    widget.onHandleKeyEventAction?.call(event);
+
+    if (event is RawKeyDownEvent) {
+      switch (event.logicalKey) {
+        case LogicalKeyboardKey.backspace:
+          _onKeyboardBackspaceListener();
+          break;
+        case LogicalKeyboardKey.arrowDown:
+          _highlightNextOption();
+          break;
+        case LogicalKeyboardKey.arrowUp:
+          _highlightPreviousOption();
+          break;
+        default:
+          break;
+      }
+    }
   }
 
   @override
@@ -673,8 +696,43 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     //* TextField use titleMedium for default style
     final defaultTextFieldTextStyle = Theme.of(context).textTheme.titleMedium;
     final textStyle = widget.textStyle?.fontSize == null
-      ? widget.textStyle?.copyWith(fontSize: defaultTextFieldTextStyle?.fontSize)
-      : widget.textStyle?.copyWith();
+        ? widget.textStyle
+            ?.copyWith(fontSize: defaultTextFieldTextStyle?.fontSize)
+        : widget.textStyle?.copyWith();
+
+    final textInputField = TextField(
+      style: textStyle,
+      focusNode: _focusNode,
+      enabled: widget.enabled,
+      controller: _textFieldController,
+      keyboardType: widget.keyboardType,
+      keyboardAppearance: widget.keyboardAppearance,
+      textCapitalization: widget.textCapitalization,
+      textInputAction: widget.textInputAction,
+      cursorColor: widget.cursorColor,
+      autocorrect: widget.autocorrect,
+      textAlign: widget.textAlign,
+      textDirection: _textDirection,
+      readOnly: widget.readOnly,
+      autofocus: widget.autofocus,
+      enableSuggestions: widget.enableSuggestions,
+      maxLines: widget.maxLines,
+      decoration: decoration,
+      onChanged: (value) {
+        _onTextFieldChange.call(value);
+        if (value.isNotEmpty) {
+          final directionByText = DirectionHelper.getDirectionByEndsText(value);
+          if (directionByText != _textDirection) {
+            setState(() {
+              _textDirection = directionByText;
+            });
+          }
+        }
+      },
+      onSubmitted: _onSubmitted,
+      inputFormatters: widget.inputFormatters,
+      onTapOutside: widget.onTapOutside,
+    );
 
     final tagEditorArea = Container(
       padding: widget.padding ?? EdgeInsets.zero,
@@ -698,64 +756,14 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             ),
           ),
           LayoutId(
-            id: TagEditorLayoutDelegate.textFieldId,
-            child: RawKeyboardListener(
-              focusNode: _focusNodeKeyboard,
-              onKey: (event) {
-                widget.onHandleKeyEventAction?.call(event);
-
-                if (event is RawKeyDownEvent) {
-                  switch (event.logicalKey) {
-                    case LogicalKeyboardKey.backspace:
-                      _onKeyboardBackspaceListener();
-                      break;
-                    case LogicalKeyboardKey.arrowDown:
-                      _highlightNextOption();
-                      break;
-                    case LogicalKeyboardKey.arrowUp:
-                      _highlightPreviousOption();
-                      break;
-                    default:
-                      break;
-                  }
-                }
-              },
-              child: TextField(
-                style: textStyle,
-                focusNode: _focusNode,
-                enabled: widget.enabled,
-                controller: _textFieldController,
-                keyboardType: widget.keyboardType,
-                keyboardAppearance: widget.keyboardAppearance,
-                textCapitalization: widget.textCapitalization,
-                textInputAction: widget.textInputAction,
-                cursorColor: widget.cursorColor,
-                autocorrect: widget.autocorrect,
-                textAlign: widget.textAlign,
-                textDirection: _textDirection,
-                readOnly: widget.readOnly,
-                autofocus: widget.autofocus,
-                enableSuggestions: widget.enableSuggestions,
-                maxLines: widget.maxLines,
-                decoration: decoration,
-                onChanged: (value) {
-                  _onTextFieldChange.call(value);
-                  if (value.isNotEmpty) {
-                    final directionByText =
-                        DirectionHelper.getDirectionByEndsText(value);
-                    if (directionByText != _textDirection) {
-                      setState(() {
-                        _textDirection = directionByText;
-                      });
-                    }
-                  }
-                },
-                onSubmitted: _onSubmitted,
-                inputFormatters: widget.inputFormatters,
-                onTapOutside: widget.onTapOutside,
-              ),
-            ),
-          )
+              id: TagEditorLayoutDelegate.textFieldId,
+              child: widget.focusNodeKeyboard != null
+                  ? RawKeyboardListener(
+                      focusNode: widget.focusNodeKeyboard!,
+                      onKey: _handleKeyboardEvent,
+                      child: textInputField,
+                    )
+                  : textInputField)
         ],
       ),
     );
