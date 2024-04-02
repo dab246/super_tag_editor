@@ -93,7 +93,13 @@ class TagEditor<T> extends StatefulWidget {
       this.autoScrollToInput = true,
       this.autoHideTextInputField = false,
       this.onSelectOptionAction})
-      : super(key: key);
+      : assert(
+            !autoHideTextInputField ||
+                (!hasAddButton &&
+                    (inputDecoration ==
+                        const InputDecoration(border: InputBorder.none))),
+            'The `autoHideTextInputField` feature is only available when `hasAddButton is false` and `inputDecoration is InputDecoration(border: InputBorder.none)`'),
+        super(key: key);
 
   /// The number of tags currently shown.
   final int length;
