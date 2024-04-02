@@ -91,6 +91,7 @@ class TagEditor<T> extends StatefulWidget {
       this.enableFocusAfterEnter = true,
       this.enableBorder = false,
       this.autoScrollToInput = true,
+      this.autoHideTextInputField = false,
       this.onSelectOptionAction})
       : super(key: key);
 
@@ -176,6 +177,9 @@ class TagEditor<T> extends StatefulWidget {
   final EdgeInsets? padding;
   final bool enableFocusAfterEnter;
   final TapRegionCallback? onTapOutside;
+
+  /// Enable automatic hide [TextField] when the text field overflows, the text is empty and focus is lost.
+  final bool autoHideTextInputField;
 
   /// [SuggestionBox]'s properties.
   final double? suggestionsBoxMaxHeight;
@@ -734,7 +738,11 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       onTapOutside: widget.onTapOutside,
     );
 
-    final tagEditorArea = Container(
+    final isHideTextField = widget.autoHideTextInputField
+        ? !_isFocused && _previousText.isEmpty
+        : false;
+
+    Widget tagEditorArea = Container(
       padding: widget.padding ?? EdgeInsets.zero,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
@@ -742,11 +750,11 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           color: widget.backgroundColor ?? Colors.transparent),
       child: TagLayout(
         delegate: TagEditorLayoutDelegate(
-          length: widget.length,
-          minTextFieldWidth: widget.minTextFieldWidth,
-          spacing: widget.tagSpacing,
-          textWidth: _getTextWidth(_previousText, textStyle: textStyle),
-        ),
+            length: widget.length,
+            minTextFieldWidth: widget.minTextFieldWidth,
+            spacing: widget.tagSpacing,
+            textWidth: _getTextWidth(_previousText, textStyle: textStyle),
+            isHideTextField: isHideTextField),
         children: [
           ...List<Widget>.generate(
             widget.length,
@@ -767,6 +775,18 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         ],
       ),
     );
+
+    if (widget.autoHideTextInputField) {
+      tagEditorArea = GestureDetector(
+        onTap: () {
+          if (!_isFocused) {
+            setState(() => _isFocused = true);
+            _focusNode.requestFocus();
+          }
+        },
+        child: tagEditorArea,
+      );
+    }
 
     Widget? itemChild;
 
