@@ -8,6 +8,7 @@ class TagEditorLayoutDelegate extends MultiChildLayoutDelegate {
     required this.minTextFieldWidth,
     required this.spacing,
     this.textWidth,
+    this.isHideTextField = false,
   });
 
   static const tagId = 'tag_';
@@ -17,6 +18,7 @@ class TagEditorLayoutDelegate extends MultiChildLayoutDelegate {
   final double minTextFieldWidth;
   final double spacing;
   final double? textWidth;
+  final bool isHideTextField;
 
   /// This is used for
   Size parentSize = Size.zero;
@@ -112,6 +114,10 @@ class TagEditorLayoutDelegate extends MultiChildLayoutDelegate {
 
         //* Reset the tagSizes for this roll
         tagSizes = <Size>[];
+
+        if (isHideTextField) {
+          textFieldSize = Size(textFieldSize.width, 0);
+        }
       } else {
         textFieldSize = layoutChild(
           textFieldId,
