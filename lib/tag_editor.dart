@@ -27,6 +27,7 @@ typedef OnDeleteTagAction = Function();
 typedef OnFocusTagAction = Function(bool focused);
 typedef OnSelectOptionAction<T> = Function(T data);
 typedef OnHandleKeyEventAction = Function(RawKeyEvent event);
+typedef OnFocusTextInputFieldCallback = Function();
 
 /// A [Widget] for editing tag similar to Google's Gmail
 /// email address input widget in the iOS app.
@@ -92,6 +93,7 @@ class TagEditor<T> extends StatefulWidget {
       this.enableBorder = false,
       this.autoScrollToInput = true,
       this.autoHideTextInputField = false,
+      this.onFocusTextInput,
       this.onSelectOptionAction})
       : assert(
             !autoHideTextInputField ||
@@ -183,6 +185,7 @@ class TagEditor<T> extends StatefulWidget {
   final EdgeInsets? padding;
   final bool enableFocusAfterEnter;
   final TapRegionCallback? onTapOutside;
+  final OnFocusTextInputFieldCallback? onFocusTextInput;
 
   /// Enable automatic hide [TextField] when the text field overflows, the text is empty and focus is lost.
   final bool autoHideTextInputField;
@@ -786,6 +789,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       tagEditorArea = GestureDetector(
         onTap: () {
           if (!_isFocused) {
+            widget.onFocusTextInput?.call();
             setState(() => _isFocused = true);
             _focusNode.requestFocus();
           }
