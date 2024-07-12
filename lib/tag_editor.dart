@@ -5,8 +5,8 @@ import 'package:debounce_throttle/debounce_throttle.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:super_tag_editor/suggestions_box_controller.dart';
 import 'package:super_tag_editor/utils/direction_helper.dart';
 import 'package:super_tag_editor/widgets/validation_suggestion_item.dart';
 
@@ -26,7 +26,7 @@ typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
 typedef OnDeleteTagAction = Function();
 typedef OnFocusTagAction = Function(bool focused);
 typedef OnSelectOptionAction<T> = Function(T data);
-typedef OnHandleKeyEventAction = Function(RawKeyEvent event);
+typedef OnHandleKeyEventAction = Function(KeyEvent event);
 typedef OnFocusTextInputFieldCallback = Function();
 
 /// A [Widget] for editing tag similar to Google's Gmail
@@ -662,10 +662,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     return textPainter.width;
   }
 
-  void _handleKeyboardEvent(RawKeyEvent event) {
+  void _handleKeyboardEvent(KeyEvent event) {
     widget.onHandleKeyEventAction?.call(event);
 
-    if (event is RawKeyDownEvent) {
+    if (event is KeyDownEvent) {
       switch (event.logicalKey) {
         case LogicalKeyboardKey.backspace:
           _onKeyboardBackspaceListener();
@@ -775,9 +775,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           LayoutId(
               id: TagEditorLayoutDelegate.textFieldId,
               child: widget.focusNodeKeyboard != null
-                  ? RawKeyboardListener(
+                  ? KeyboardListener(
                       focusNode: widget.focusNodeKeyboard!,
-                      onKey: _handleKeyboardEvent,
+                      onKeyEvent: _handleKeyboardEvent,
                       child: textInputField,
                     )
                   : textInputField)
