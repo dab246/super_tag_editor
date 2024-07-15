@@ -1,4 +1,8 @@
 
+# 0.3.0
+
+- Compatible with flutter version `v3.22.2`
+
 # 0.2.0
 
 - Compatible with flutter version `v3.10.6`
