@@ -6,6 +6,9 @@ on:
 
 name: CI
 
+env:
+  FLUTTER_VERSION: 3.22.2
+
 jobs:
   analyze-test:
     name: Analyze and test
@@ -23,7 +26,7 @@ jobs:
       - name: Setup flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.22.2"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: "stable"
 
       - name: Run prebuild
