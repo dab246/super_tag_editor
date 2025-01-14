@@ -34,7 +34,27 @@ class _MyHomePageState extends State<MyHomePage> {
     'dat@gmail.com',
     'dab246@gmail.com',
     'kaka@gmail.com',
-    'datvu@gmail.com'
+    'datvu@gmail.com',
+    'datvu1@gmail.com',
+    'datvu2@gmail.com',
+    'datvu3@gmail.com',
+    'datvu4@gmail.com',
+    'datvu5@gmail.com',
+    'datvu6@gmail.com',
+    'datvu7@gmail.com',
+    'datvu8@gmail.com',
+    'datvu9@gmail.com',
+    'datvu10@gmail.com',
+    'datvu11@gmail.com',
+    'datvu12@gmail.com',
+    'datvu13@gmail.com',
+    'datvu14@gmail.com',
+    'datvu15@gmail.com',
+    'datvu16@gmail.com',
+    'datvu17@gmail.com',
+    'datvu18@gmail.com',
+    'datvu19@gmail.com',
+    'datvu20@gmail.com',
   ];
 
   List<String> _values = [];
@@ -93,6 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   delimiters: [',', ' '],
                   hasAddButton: true,
                   resetTextOnSubmitted: true,
+                  suggestionsBoxMaxHeight: 300,
                   // This is set to grey just to illustrate the `textStyle` prop
                   textStyle: const TextStyle(color: Colors.grey),
                   onSubmitted: (outstandingValue) {

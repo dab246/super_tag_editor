@@ -354,19 +354,21 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         if (renderBox != null) {
           final size = renderBox!.size;
           final renderBoxOffset = renderBox!.localToGlobal(Offset.zero);
-          final topAvailableSpace = renderBoxOffset.dy;
+          final topAvailableSpace = renderBoxOffset.dy + size.height - 20;
           final mq = MediaQuery.of(context);
           final bottomAvailableSpace = mq.size.height -
               mq.viewInsets.bottom -
               renderBoxOffset.dy -
               size.height;
-          var suggestionBoxHeight =
-              max(topAvailableSpace, bottomAvailableSpace);
-          if (null != widget.suggestionsBoxMaxHeight) {
-            suggestionBoxHeight =
-                max(suggestionBoxHeight, widget.suggestionsBoxMaxHeight!);
-          }
+          debugPrint('TagsEditorState::_createOverlayEntry:topAvailableSpace = $topAvailableSpace | bottomAvailableSpace = $bottomAvailableSpace');
+          final maxAvailableSpace = max(topAvailableSpace, bottomAvailableSpace) - 50;
+          debugPrint('TagsEditorState::_createOverlayEntry:maxAvailableSpace = $maxAvailableSpace | suggestionsBoxMaxHeight = ${widget.suggestionsBoxMaxHeight}');
+          final suggestionBoxHeight = widget.suggestionsBoxMaxHeight != null
+            ? min(maxAvailableSpace, widget.suggestionsBoxMaxHeight!)
+            : maxAvailableSpace;
+          debugPrint('TagsEditorState::_createOverlayEntry:suggestionBoxHeight = $suggestionBoxHeight');
           final showTop = topAvailableSpace > bottomAvailableSpace;
+          debugPrint('TagsEditorState::_createOverlayEntry:showTop = $showTop');
 
           return StreamBuilder<List<T>?>(
             stream: _suggestionsStreamController?.stream,
