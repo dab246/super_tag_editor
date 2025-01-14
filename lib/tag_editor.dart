@@ -94,6 +94,7 @@ class TagEditor<T> extends StatefulWidget {
       this.autoScrollToInput = true,
       this.autoHideTextInputField = false,
       this.isLoadMoreOnlyOnce = false,
+      this.isLoadMoreReplaceAllOld = true,
       this.onFocusTextInput,
       this.onSelectOptionAction,
       this.loadMoreSuggestions})
@@ -212,6 +213,7 @@ class TagEditor<T> extends StatefulWidget {
   final double? suggestionBoxWidth;
   final double? suggestionItemHeight;
   final bool isLoadMoreOnlyOnce;
+  final bool isLoadMoreReplaceAllOld;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -369,19 +371,15 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               mq.viewInsets.bottom -
               renderBoxOffset.dy -
               size.height;
-          debugPrint(
-              'TagsEditorState::_createOverlayEntry:topAvailableSpace = $topAvailableSpace | bottomAvailableSpace = $bottomAvailableSpace');
+
           final maxAvailableSpace =
               max(topAvailableSpace, bottomAvailableSpace) - 50;
-          debugPrint(
-              'TagsEditorState::_createOverlayEntry:maxAvailableSpace = $maxAvailableSpace | suggestionsBoxMaxHeight = ${widget.suggestionsBoxMaxHeight}');
+
           final suggestionBoxHeight = widget.suggestionsBoxMaxHeight != null
               ? min(maxAvailableSpace, widget.suggestionsBoxMaxHeight!)
               : maxAvailableSpace;
-          debugPrint(
-              'TagsEditorState::_createOverlayEntry:suggestionBoxHeight = $suggestionBoxHeight');
+
           final showTop = topAvailableSpace > bottomAvailableSpace;
-          debugPrint('TagsEditorState::_createOverlayEntry:showTop = $showTop');
 
           return StreamBuilder<List<T>?>(
             stream: _suggestionsStreamController?.stream,
@@ -405,8 +403,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                       return ValueListenableBuilder(
                         valueListenable: _loadingMoreStatus,
                         builder: (_, value, __) {
-                          debugPrint(
-                              'TagsEditorState::_createOverlayEntry::ValueListenableBuilder:value = $value');
                           if (value) {
                             return Container(
                               alignment: Alignment.center,
@@ -534,10 +530,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   Future<void> _loadMoreSuggestion() async {
-    debugPrint('TagsEditorState::_loadMoreSuggestion:');
     final currentSuggestionValue = _validationSuggestionItemNotifier.value;
-    debugPrint(
-        'TagsEditorState::_loadMoreSuggestion:currentSuggestionValue = $currentSuggestionValue');
+
     if (currentSuggestionValue == null) return;
 
     _isLoadingMore = true;
@@ -551,9 +545,19 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       return;
     }
 
-    if (mounted) {
-      setState(() => _suggestions = results);
+    if (!widget.isLoadMoreReplaceAllOld && _suggestions?.isNotEmpty == true) {
+      results!.removeWhere((element) => _suggestions!.contains(element));
+      final newList = [..._suggestions!, ...results];
+
+      if (mounted) {
+        setState(() => _suggestions = newList);
+      }
+    } else {
+      if (mounted) {
+        setState(() => _suggestions = results);
+      }
     }
+
     _updateHighlight(0);
     _suggestionsStreamController?.add(_suggestions ?? []);
     _suggestionsBoxController?.open();
