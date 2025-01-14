@@ -243,6 +243,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   final ValueNotifier<String?> _validationSuggestionItemNotifier =
       ValueNotifier<String?>(null);
   final ValueNotifier<bool> _loadingMoreStatus = ValueNotifier<bool>(false);
+  final ScrollController _scrollController = ScrollController();
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
 
@@ -277,6 +278,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _validationSuggestionItemNotifier.dispose();
     _loadingMoreStatus.dispose();
     _deBouncer?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -388,6 +390,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               if (snapshot.data?.isNotEmpty == true) {
                 Widget listViewWidget = ListView.builder(
                   shrinkWrap: true,
+                  controller: _scrollController,
                   padding: widget.suggestionPadding ?? EdgeInsets.zero,
                   itemCount: widget.loadMoreSuggestions != null
                       ? snapshot.data!.length + 1
@@ -542,7 +545,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
     final results =
         await widget.loadMoreSuggestions?.call(currentSuggestionValue);
-    await Future.delayed(const Duration(milliseconds: 4000));
     if (results?.isNotEmpty != true) {
       _isLoadingMore = widget.isLoadMoreOnlyOnce;
       _loadingMoreStatus.value = false;
@@ -558,6 +560,16 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
     _isLoadingMore = widget.isLoadMoreOnlyOnce;
     _loadingMoreStatus.value = false;
+  }
+
+  void _scrollToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void _onTagChanged(String string) {
@@ -614,6 +626,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _suggestionsStreamController?.add(_suggestions ?? []);
     _suggestionsBoxController?.open();
     _isLoadingMore = false;
+    _scrollToTop();
   }
 
   void openSuggestionBox() async {
@@ -628,6 +641,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       _suggestionsStreamController?.add(_suggestions ?? []);
       _suggestionsBoxController?.open();
       _isLoadingMore = false;
+      _scrollToTop();
     }
   }
 
