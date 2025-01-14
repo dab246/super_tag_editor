@@ -93,8 +93,10 @@ class TagEditor<T> extends StatefulWidget {
       this.enableBorder = false,
       this.autoScrollToInput = true,
       this.autoHideTextInputField = false,
+      this.isLoadMoreOnlyOnce = false,
       this.onFocusTextInput,
-      this.onSelectOptionAction})
+      this.onSelectOptionAction,
+      this.loadMoreSuggestions})
       : assert(
             !autoHideTextInputField ||
                 (!hasAddButton &&
@@ -197,6 +199,7 @@ class TagEditor<T> extends StatefulWidget {
   final InputSuggestions<T> findSuggestions;
   final SearchSuggestions<T>? searchAllSuggestions;
   final OnSelectOptionAction<T>? onSelectOptionAction;
+  final InputSuggestions<T>? loadMoreSuggestions;
   final Color? suggestionsBoxBackgroundColor;
   final Color? itemHighlightColor;
   final double? suggestionsBoxRadius;
@@ -208,6 +211,7 @@ class TagEditor<T> extends StatefulWidget {
   final bool useDefaultHighlight;
   final double? suggestionBoxWidth;
   final double? suggestionItemHeight;
+  final bool isLoadMoreOnlyOnce;
 
   @override
   TagsEditorState<T> createState() => TagsEditorState<T>();
@@ -233,10 +237,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   List<T>? _suggestions;
   int _searchId = 0;
   int _countBackspacePressed = 0;
+  bool _isLoadingMore = false;
   Debouncer<String>? _deBouncer;
   final ValueNotifier<int> _highlightedOptionIndex = ValueNotifier<int>(0);
   final ValueNotifier<String?> _validationSuggestionItemNotifier =
       ValueNotifier<String?>(null);
+  final ValueNotifier<bool> _loadingMoreStatus = ValueNotifier<bool>(false);
 
   RenderBox? get renderBox => context.findRenderObject() as RenderBox?;
 
@@ -269,6 +275,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _suggestionsBoxController?.close();
     _highlightedOptionIndex.dispose();
     _validationSuggestionItemNotifier.dispose();
+    _loadingMoreStatus.dispose();
     _deBouncer?.cancel();
     super.dispose();
   }
@@ -360,13 +367,17 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
               mq.viewInsets.bottom -
               renderBoxOffset.dy -
               size.height;
-          debugPrint('TagsEditorState::_createOverlayEntry:topAvailableSpace = $topAvailableSpace | bottomAvailableSpace = $bottomAvailableSpace');
-          final maxAvailableSpace = max(topAvailableSpace, bottomAvailableSpace) - 50;
-          debugPrint('TagsEditorState::_createOverlayEntry:maxAvailableSpace = $maxAvailableSpace | suggestionsBoxMaxHeight = ${widget.suggestionsBoxMaxHeight}');
+          debugPrint(
+              'TagsEditorState::_createOverlayEntry:topAvailableSpace = $topAvailableSpace | bottomAvailableSpace = $bottomAvailableSpace');
+          final maxAvailableSpace =
+              max(topAvailableSpace, bottomAvailableSpace) - 50;
+          debugPrint(
+              'TagsEditorState::_createOverlayEntry:maxAvailableSpace = $maxAvailableSpace | suggestionsBoxMaxHeight = ${widget.suggestionsBoxMaxHeight}');
           final suggestionBoxHeight = widget.suggestionsBoxMaxHeight != null
-            ? min(maxAvailableSpace, widget.suggestionsBoxMaxHeight!)
-            : maxAvailableSpace;
-          debugPrint('TagsEditorState::_createOverlayEntry:suggestionBoxHeight = $suggestionBoxHeight');
+              ? min(maxAvailableSpace, widget.suggestionsBoxMaxHeight!)
+              : maxAvailableSpace;
+          debugPrint(
+              'TagsEditorState::_createOverlayEntry:suggestionBoxHeight = $suggestionBoxHeight');
           final showTop = topAvailableSpace > bottomAvailableSpace;
           debugPrint('TagsEditorState::_createOverlayEntry:showTop = $showTop');
 
@@ -374,7 +385,76 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
             stream: _suggestionsStreamController?.stream,
             initialData: _suggestions,
             builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+              if (snapshot.data?.isNotEmpty == true) {
+                Widget listViewWidget = ListView.builder(
+                  shrinkWrap: true,
+                  padding: widget.suggestionPadding ?? EdgeInsets.zero,
+                  itemCount: widget.loadMoreSuggestions != null
+                      ? snapshot.data!.length + 1
+                      : snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    if (_suggestions?.isNotEmpty != true) {
+                      return const SizedBox.shrink();
+                    }
+
+                    if (widget.loadMoreSuggestions != null &&
+                        index == snapshot.data!.length) {
+                      return ValueListenableBuilder(
+                        valueListenable: _loadingMoreStatus,
+                        builder: (_, value, __) {
+                          debugPrint(
+                              'TagsEditorState::_createOverlayEntry::ValueListenableBuilder:value = $value');
+                          if (value) {
+                            return Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CupertinoActivityIndicator(),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      );
+                    }
+
+                    final item = _suggestions![index];
+                    final highlight =
+                        AutocompleteHighlightedOption.of(context) == index;
+                    final suggestionValid =
+                        ValidationSuggestionItem.of(context);
+
+                    final itemWidget = widget.suggestionBuilder(
+                      context,
+                      this,
+                      item,
+                      index,
+                      snapshot.data!.length,
+                      highlight,
+                      suggestionValid,
+                    );
+
+                    if (widget.useDefaultHighlight && highlight) {
+                      return ColoredBox(
+                        color: widget.itemHighlightColor ??
+                            Theme.of(context).focusColor,
+                        child: itemWidget,
+                      );
+                    } else {
+                      return itemWidget;
+                    }
+                  },
+                );
+
+                if (widget.loadMoreSuggestions != null) {
+                  listViewWidget = NotificationListener<ScrollNotification>(
+                    onNotification: _onScrollNotification,
+                    child: listViewWidget,
+                  );
+                }
+
                 final suggestionsListView = TextFieldTapRegion(
                   child: PointerInterceptor(
                     child: AutocompleteHighlightedOption(
@@ -385,71 +465,26 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                           padding: widget.suggestionMargin ?? EdgeInsets.zero,
                           child: Material(
                             elevation: widget.suggestionsBoxElevation ?? 20,
-                            borderRadius: BorderRadius.circular(
-                                widget.suggestionsBoxRadius ?? 20),
+                            borderRadius: BorderRadius.all(Radius.circular(
+                                widget.suggestionsBoxRadius ?? 20)),
                             color: widget.suggestionsBoxBackgroundColor ??
                                 Colors.white,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                  widget.suggestionsBoxRadius ?? 20),
+                              borderRadius: BorderRadius.all(Radius.circular(
+                                  widget.suggestionsBoxRadius ?? 20)),
                               child: Container(
-                                  decoration: BoxDecoration(
-                                      color: widget
-                                              .suggestionsBoxBackgroundColor ??
-                                          Colors.white,
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(
-                                              widget.suggestionsBoxRadius ??
-                                                  0))),
-                                  constraints: BoxConstraints(
-                                      maxHeight: suggestionBoxHeight),
-                                  child: ListView.builder(
-                                    shrinkWrap: true,
-                                    padding: widget.suggestionPadding ??
-                                        EdgeInsets.zero,
-                                    itemCount: snapshot.data!.length,
-                                    itemBuilder: (context, index) {
-                                      if (_suggestions != null &&
-                                          _suggestions?.isNotEmpty == true) {
-                                        final item = _suggestions![index];
-                                        final highlight =
-                                            AutocompleteHighlightedOption.of(
-                                                    context) ==
-                                                index;
-                                        final suggestionValid =
-                                            ValidationSuggestionItem.of(
-                                                context);
-
-                                        if (!widget.useDefaultHighlight) {
-                                          return widget.suggestionBuilder(
-                                              context,
-                                              this,
-                                              item,
-                                              index,
-                                              snapshot.data!.length,
-                                              highlight,
-                                              suggestionValid);
-                                        } else {
-                                          return Container(
-                                              color: highlight
-                                                  ? widget.itemHighlightColor ??
-                                                      Theme.of(context)
-                                                          .focusColor
-                                                  : null,
-                                              child: widget.suggestionBuilder(
-                                                  context,
-                                                  this,
-                                                  item,
-                                                  index,
-                                                  snapshot.data!.length,
-                                                  highlight,
-                                                  suggestionValid));
-                                        }
-                                      } else {
-                                        return Container();
-                                      }
-                                    },
-                                  )),
+                                decoration: BoxDecoration(
+                                  color: widget.suggestionsBoxBackgroundColor ??
+                                      Colors.white,
+                                  borderRadius: BorderRadius.all(
+                                      Radius.circular(
+                                          widget.suggestionsBoxRadius ?? 0)),
+                                ),
+                                constraints: BoxConstraints(
+                                  maxHeight: suggestionBoxHeight,
+                                ),
+                                child: listViewWidget,
+                              ),
                             ),
                           ),
                         ),
@@ -483,6 +518,46 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
         return Container();
       },
     );
+  }
+
+  bool _onScrollNotification(ScrollNotification scrollInfo) {
+    if (scrollInfo is ScrollEndNotification &&
+        scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent &&
+        scrollInfo.metrics.axisDirection == AxisDirection.down &&
+        !_isLoadingMore) {
+      _loadMoreSuggestion();
+    }
+    return false;
+  }
+
+  Future<void> _loadMoreSuggestion() async {
+    debugPrint('TagsEditorState::_loadMoreSuggestion:');
+    final currentSuggestionValue = _validationSuggestionItemNotifier.value;
+    debugPrint(
+        'TagsEditorState::_loadMoreSuggestion:currentSuggestionValue = $currentSuggestionValue');
+    if (currentSuggestionValue == null) return;
+
+    _isLoadingMore = true;
+    _loadingMoreStatus.value = true;
+
+    final results =
+        await widget.loadMoreSuggestions?.call(currentSuggestionValue);
+    await Future.delayed(const Duration(milliseconds: 4000));
+    if (results?.isNotEmpty != true) {
+      _isLoadingMore = widget.isLoadMoreOnlyOnce;
+      _loadingMoreStatus.value = false;
+      return;
+    }
+
+    if (mounted) {
+      setState(() => _suggestions = results);
+    }
+    _updateHighlight(0);
+    _suggestionsStreamController?.add(_suggestions ?? []);
+    _suggestionsBoxController?.open();
+
+    _isLoadingMore = widget.isLoadMoreOnlyOnce;
+    _loadingMoreStatus.value = false;
   }
 
   void _onTagChanged(String string) {
@@ -538,6 +613,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _updateValidationSuggestionItem(value);
     _suggestionsStreamController?.add(_suggestions ?? []);
     _suggestionsBoxController?.open();
+    _isLoadingMore = false;
   }
 
   void openSuggestionBox() async {
@@ -551,6 +627,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       _updateValidationSuggestionItem(null);
       _suggestionsStreamController?.add(_suggestions ?? []);
       _suggestionsBoxController?.open();
+      _isLoadingMore = false;
     }
   }
 
@@ -562,6 +639,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _updateHighlight(0);
     _updateValidationSuggestionItem(null);
     _suggestionsBoxController?.close();
+    _isLoadingMore = false;
   }
 
   void _scrollToVisible() {
