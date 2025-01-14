@@ -113,7 +113,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   delimiters: [',', ' '],
                   hasAddButton: true,
                   resetTextOnSubmitted: true,
-                  suggestionsBoxMaxHeight: 300,
+                  suggestionsBoxMaxHeight: 200,
+                  isLoadMoreOnlyOnce: true,
                   // This is set to grey just to illustrate the `textStyle` prop
                   textStyle: const TextStyle(color: Colors.grey),
                   onSubmitted: (outstandingValue) {
@@ -200,6 +201,27 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   suggestionsBoxElevation: 10,
                   findSuggestions: (String query) {
+                    debugPrint(
+                        '_MyHomePageState::build:findSuggestions::query = $query');
+                    if (query.isNotEmpty) {
+                      var lowercaseQuery = query.toLowerCase();
+                      return mockResults.sublist(0, 8).where((profile) {
+                        return profile
+                                .toLowerCase()
+                                .contains(query.toLowerCase()) ||
+                            profile.toLowerCase().contains(query.toLowerCase());
+                      }).toList(growable: false)
+                        ..sort((a, b) => a
+                            .toLowerCase()
+                            .indexOf(lowercaseQuery)
+                            .compareTo(
+                                b.toLowerCase().indexOf(lowercaseQuery)));
+                    }
+                    return [];
+                  },
+                  loadMoreSuggestions: (query) {
+                    debugPrint(
+                        '_MyHomePageState::build:_loadMoreSuggestion::query = $query');
                     if (query.isNotEmpty) {
                       var lowercaseQuery = query.toLowerCase();
                       return mockResults.where((profile) {
