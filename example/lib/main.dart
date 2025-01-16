@@ -115,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   resetTextOnSubmitted: true,
                   suggestionsBoxMaxHeight: 200,
                   isLoadMoreOnlyOnce: true,
+                  isLoadMoreReplaceAllOld: false,
                   // This is set to grey just to illustrate the `textStyle` prop
                   textStyle: const TextStyle(color: Colors.grey),
                   onSubmitted: (outstandingValue) {

@@ -220,6 +220,8 @@ class TagEditor<T> extends StatefulWidget {
 }
 
 class TagsEditorState<T> extends State<TagEditor<T>> {
+  static const double defaultItemHeight = 50.0;
+
   /// A controller to keep value of the [TextField].
   late TextEditingController _textFieldController;
   late TextDirection _textDirection;
@@ -290,11 +292,57 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void _highlightPreviousOption() {
-    _updateHighlight(_highlightedOptionIndex.value - 1);
+    if (_suggestions?.isNotEmpty != true || _highlightedOptionIndex.value <= 0) {
+      return;
+    }
+
+    final newIndex =
+        (_highlightedOptionIndex.value - 1).clamp(0, _suggestions!.length - 1);
+    _updateHighlight(newIndex);
+    _scrollToCenterHighlightedItem();
   }
 
   void _highlightNextOption() {
-    _updateHighlight(_highlightedOptionIndex.value + 1);
+    if (_suggestions?.isNotEmpty != true) return;
+
+    if (_highlightedOptionIndex.value >= _suggestions!.length - 1) return;
+
+    final newIndex =
+        (_highlightedOptionIndex.value + 1).clamp(0, _suggestions!.length - 1);
+    _updateHighlight(newIndex);
+
+    debugPrint(
+        'TagsEditorState::_highlightNextOption:newIndex = $newIndex | _suggestions = ${_suggestions?.length} | _isLoadingMore = $_isLoadingMore');
+
+    _scrollToCenterHighlightedItem();
+
+    if (widget.loadMoreSuggestions != null &&
+        _highlightedOptionIndex.value == _suggestions!.length - 1 &&
+        !_isLoadingMore) {
+      _loadMoreSuggestion();
+    }
+  }
+
+  void _scrollToCenterHighlightedItem() {
+    debugPrint(
+        'TagsEditorState::_scrollToCenterHighlightedItem:_highlightedOptionIndex = ${_highlightedOptionIndex.value}');
+    final itemHeight = widget.suggestionItemHeight ?? defaultItemHeight;
+    final viewportHeight = _scrollController.position.viewportDimension;
+    final centerOffset = (viewportHeight - itemHeight) / 2;
+
+    double scrollOffset =
+        (_highlightedOptionIndex.value * itemHeight) - centerOffset;
+
+    scrollOffset = scrollOffset.clamp(
+      _scrollController.position.minScrollExtent,
+      _scrollController.position.maxScrollExtent,
+    );
+
+    _scrollController.animateTo(
+      scrollOffset,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _selectOption() {
@@ -492,12 +540,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                   ),
                 );
 
-                final heightSuggestion = (widget.suggestionItemHeight ?? 50) *
-                    (snapshot.data!.length);
+                final itemHeight =
+                    widget.suggestionItemHeight ?? defaultItemHeight;
+                final heightSuggestion = itemHeight * snapshot.data!.length;
                 final offsetY = min(heightSuggestion, suggestionBoxHeight);
                 final compositedTransformFollowerOffset = showTop
-                    ? Offset(0,
-                        -1.0 * (offsetY + (widget.suggestionItemHeight ?? 50)))
+                    ? Offset(0, -1.0 * (offsetY + itemHeight))
                     : Offset.zero;
 
                 return Positioned(
@@ -531,6 +579,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
   Future<void> _loadMoreSuggestion() async {
     final currentSuggestionValue = _validationSuggestionItemNotifier.value;
+    debugPrint(
+        'TagsEditorState::_loadMoreSuggestion:currentSuggestionValue = $currentSuggestionValue');
 
     if (currentSuggestionValue == null) return;
 
@@ -539,6 +589,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
     final results =
         await widget.loadMoreSuggestions?.call(currentSuggestionValue);
+    debugPrint(
+        'TagsEditorState::_loadMoreSuggestion:results = ${results?.length}');
     if (results?.isNotEmpty != true) {
       _isLoadingMore = widget.isLoadMoreOnlyOnce;
       _loadingMoreStatus.value = false;
@@ -546,8 +598,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     }
 
     if (!widget.isLoadMoreReplaceAllOld && _suggestions?.isNotEmpty == true) {
-      results!.removeWhere((element) => _suggestions!.contains(element));
-      final newList = [..._suggestions!, ...results];
+      final newSuggestions =
+          results?.where((element) => !_suggestions!.contains(element)) ?? [];
+      final newList = [..._suggestions!, ...newSuggestions];
 
       if (mounted) {
         setState(() => _suggestions = newList);
@@ -558,7 +611,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       }
     }
 
-    _updateHighlight(0);
     _suggestionsStreamController?.add(_suggestions ?? []);
     _suggestionsBoxController?.open();
 
