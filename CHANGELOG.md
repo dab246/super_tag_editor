@@ -1,4 +1,8 @@
 
+# 0.3.1
+
+- Support `LoadMore` for `SuggestionsBox` by mouse or keyboard
+
 # 0.3.0
 
 - Compatible with flutter version `v3.22.2`
