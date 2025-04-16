@@ -544,7 +544,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                     widget.suggestionItemHeight ?? defaultItemHeight;
                 final heightSuggestion = itemHeight * snapshot.data!.length;
                 final offsetY = min(heightSuggestion, suggestionBoxHeight);
-                final compositedTransformFollowerOffset = showTop
+                final compositedTransformFollowerOffset = showTop && offsetY > bottomAvailableSpace
                     ? Offset(0, -1.0 * (offsetY + itemHeight))
                     : Offset.zero;
 
