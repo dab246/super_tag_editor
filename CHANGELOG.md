@@ -1,4 +1,11 @@
 
+# 0.3.2
+
+- Fix the suggestion list always displays on top when there is still space below
+- Compatible with flutter version `v3.24.5`
+- Upgrade kotlin version to `v1.7.10`
+- Bumped versions of deprecated actions
+
 # 0.3.1
 
 - Support `LoadMore` for `SuggestionsBox` by mouse or keyboard
