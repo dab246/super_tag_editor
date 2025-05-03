@@ -715,8 +715,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void _scrollToVisible() {
     Future.delayed(const Duration(milliseconds: 300), () {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final renderBox = context.findRenderObject() as RenderBox;
-        await Scrollable.of(context).position.ensureVisible(renderBox);
+        if (mounted) {
+          final renderBox = context.findRenderObject() as RenderBox;
+          await Scrollable.of(context).position.ensureVisible(renderBox);
+        }
       });
     });
   }
