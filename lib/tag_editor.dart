@@ -743,6 +743,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _previousText = '';
     _updateHighlight(0);
     _updateValidationSuggestionItem(null);
+    if (widget.activateSuggestionBox) {
+      // Effectively reset and trigger search for empty
+      _deBouncer?.value = '';
+      _suggestions = [];
+      _suggestionsStreamController?.add([]);
+    }
   }
 
   /// Shamelessly copied from [InputDecorator]
