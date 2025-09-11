@@ -57,10 +57,10 @@ class _MyHomePageState extends State<MyHomePage> {
     'datvu20@gmail.com',
   ];
 
-  List<String> _values = [];
+  final List<String> _values = [];
   final FocusNode _focusNode = FocusNode();
   final TextEditingController _textEditingController = TextEditingController();
-  bool focusTagEnabled = false;
+  int tagFocusIndex = -1;
 
   FocusNode? _focusNodeKeyboard;
 
@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   controller: _textEditingController,
                   focusNode: _focusNode,
                   focusNodeKeyboard: _focusNodeKeyboard,
-                  delimiters: [',', ' '],
+                  delimiters: const [',', ' '],
                   hasAddButton: true,
                   resetTextOnSubmitted: true,
                   suggestionsBoxMaxHeight: 200,
@@ -133,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   },
                   tagBuilder: (context, index) => Container(
-                    color: focusTagEnabled && index == _values.length - 1
+                    color: tagFocusIndex == index
                         ? Colors.redAccent
                         : Colors.white,
                     child: _Chip(
@@ -183,15 +183,19 @@ class _MyHomePageState extends State<MyHomePage> {
                           )),
                     );
                   },
-                  onFocusTagAction: (focused) {
+                  onFocusTagAction: (index) {
+                    debugPrint(
+                        '_MyHomePageState::build:onFocusTagAction::index = $index');
                     setState(() {
-                      focusTagEnabled = focused;
+                      tagFocusIndex = index;
                     });
                   },
-                  onDeleteTagAction: () {
-                    if (_values.isNotEmpty) {
+                  onDeleteTagAction: (index) {
+                    if (_values.isNotEmpty &&
+                        index >= 0 &&
+                        index < _values.length) {
                       setState(() {
-                        _values.removeLast();
+                        _values.removeAt(index);
                       });
                     }
                   },

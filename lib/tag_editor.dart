@@ -23,8 +23,8 @@ typedef SuggestionBuilder<T> = Widget Function(
     String? suggestionValid);
 typedef InputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef SearchSuggestions<T> = FutureOr<List<T>> Function();
-typedef OnDeleteTagAction = Function();
-typedef OnFocusTagAction = Function(bool focused);
+typedef OnDeleteTagAction = Function(int index);
+typedef OnFocusTagAction = Function(int index);
 typedef OnSelectOptionAction<T> = Function(T data);
 typedef OnHandleKeyEventAction = Function(KeyEvent event);
 typedef OnFocusTextInputFieldCallback = Function();
@@ -241,6 +241,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   List<T>? _suggestions;
   int _searchId = 0;
   int _countBackspacePressed = 0;
+  int _tagFocusIndex = -1;
   bool _isLoadingMore = false;
   Debouncer<String>? _deBouncer;
   final ValueNotifier<int> _highlightedOptionIndex = ValueNotifier<int>(0);
@@ -260,19 +261,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     _focusNode = (widget.focusNode ?? FocusNode())
       ..addListener(_onFocusChanged);
 
-    if (widget.focusNodeKeyboard != null) {
-      widget.focusNodeKeyboard!.addListener(_onFocusKeyboardChanged);
-    }
-
     if (widget.activateSuggestionBox) _initializeSuggestionBox();
   }
 
   @override
   void dispose() {
     _focusNode.removeListener(_onFocusChanged);
-    if (widget.focusNodeKeyboard != null) {
-      widget.focusNodeKeyboard!.removeListener(_onFocusKeyboardChanged);
-    }
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
@@ -379,8 +373,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void _onFocusChanged() {
     if (_focusNode.hasFocus) {
       if (widget.focusNodeKeyboard != null) {
-        widget.onFocusTagAction?.call(false);
+        _tagFocusIndex = -1;
         _countBackspacePressed = 0;
+        widget.onFocusTagAction?.call(_tagFocusIndex);
       }
       if (widget.autoScrollToInput) {
         _scrollToVisible();
@@ -394,16 +389,6 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
       setState(() {
         _isFocused = _focusNode.hasFocus;
       });
-    }
-  }
-
-  void _onFocusKeyboardChanged() {
-    if (widget.focusNodeKeyboard?.hasFocus == true) {
-      widget.onFocusTagAction?.call(true);
-      _countBackspacePressed = 1;
-    } else {
-      widget.onFocusTagAction?.call(false);
-      _countBackspacePressed = 0;
     }
   }
 
@@ -778,27 +763,100 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     return _isFocused ? activeColor : _getDefaultIconColor(themeData);
   }
 
-  void _onKeyboardBackspaceListener() async {
+  void _onKeyboardBackspaceListener() {
     if (_textFieldController.text.isEmpty && widget.length > 0) {
-      _countBackspacePressed++;
-
-      if (_countBackspacePressed == 1) {
-        _focusNode.unfocus();
-        widget.focusNodeKeyboard?.requestFocus();
-      } else if (_countBackspacePressed >= 2) {
-        widget.onDeleteTagAction?.call();
-        if (widget.length > 1) {
-          _countBackspacePressed = 1;
-        } else {
-          _countBackspacePressed = 0;
-          widget.focusNodeKeyboard?.unfocus();
-          _focusNode.requestFocus();
-        }
+      if (_tagFocusIndex != -1) {
+        _changeFocusWhenWithATagFocused();
+      } else {
+        _changeFocusWhenWithoutTagFocused();
       }
     } else {
-      widget.focusNodeKeyboard?.unfocus();
-      _focusNode.requestFocus();
+      _resetFocus();
     }
+  }
+
+  void _changeFocusWhenWithATagFocused() {
+    _deleteTagAt(_tagFocusIndex);
+    if (widget.length > 1) {
+      _countBackspacePressed = 1;
+      if (_tagFocusIndex >= widget.length - 1) {
+        _tagFocusIndex = widget.length - 2;
+      }
+      widget.onFocusTagAction?.call(_tagFocusIndex);
+    } else {
+      _resetFocus();
+    }
+  }
+
+  void _changeFocusWhenWithoutTagFocused() {
+    _countBackspacePressed++;
+
+    if (_countBackspacePressed == 1) {
+      _tagFocusIndex = widget.length - 1;
+      if (_tagFocusIndex <= 0) {
+        _tagFocusIndex = 0;
+      }
+      _focusTag(_tagFocusIndex);
+    } else if (_countBackspacePressed >= 2) {
+      _deleteTagAt(_tagFocusIndex);
+      if (widget.length > 1) {
+        _countBackspacePressed = 1;
+        _tagFocusIndex = widget.length - 1;
+        if (_tagFocusIndex <= 0) {
+          _tagFocusIndex = 0;
+        }
+        widget.onFocusTagAction?.call(_tagFocusIndex);
+      } else {
+        _resetFocus();
+      }
+    }
+  }
+
+  void _focusPreviousTag() {
+    if (_textFieldController.text.trim().isNotEmpty || widget.length <= 0) {
+      return;
+    }
+    if (_tagFocusIndex == -1) {
+      _tagFocusIndex = widget.length - 1;
+    } else {
+      _tagFocusIndex--;
+    }
+    if (_tagFocusIndex <= 0) {
+      _tagFocusIndex = 0;
+    }
+    _focusTag(_tagFocusIndex);
+  }
+
+  void _focusNextTag() {
+    if (_textFieldController.text.trim().isNotEmpty ||
+        widget.length <= 0 ||
+        _tagFocusIndex == -1) {
+      return;
+    }
+    _tagFocusIndex++;
+    if (_tagFocusIndex >= widget.length) {
+      _resetFocus();
+    } else {
+      _focusTag(_tagFocusIndex);
+    }
+  }
+
+  void _focusTag(int index) {
+    _focusNode.unfocus();
+    widget.focusNodeKeyboard?.requestFocus();
+    widget.onFocusTagAction?.call(index);
+  }
+
+  void _resetFocus() {
+    _countBackspacePressed = 0;
+    _tagFocusIndex = -1;
+    widget.focusNodeKeyboard?.unfocus();
+    _focusNode.requestFocus();
+    widget.onFocusTagAction?.call(_tagFocusIndex);
+  }
+
+  void _deleteTagAt(int index) {
+    widget.onDeleteTagAction?.call(index);
   }
 
   double _getTextWidth(String text, {TextStyle? textStyle}) {
@@ -827,6 +885,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           break;
         case LogicalKeyboardKey.arrowUp:
           _highlightPreviousOption();
+          break;
+        case LogicalKeyboardKey.arrowLeft:
+          _focusPreviousTag();
+          break;
+        case LogicalKeyboardKey.arrowRight:
+          _focusNextTag();
           break;
         default:
           break;
