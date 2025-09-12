@@ -34,7 +34,7 @@ jobs:
         with:
           analysis-options-file: "placeholder"
 
-      - name: Test
+      - name: Run Flutter tests
         run: |
           if [[ "${{ matrix.modules }}" == "default" ]]; then
             flutter test -r json > test-report-${{ matrix.modules }}.json
@@ -46,24 +46,26 @@ jobs:
         if: success() || failure() # Always upload report
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports-${{ matrix.modules }}
+          name: test-reports-${{ matrix.modules }}   # 👈 unique per module
           path: test-report*.json
 
   report:
     runs-on: ubuntu-latest
-    if: success() || failure() # Always upload report
+    if: success() || failure() # Always run
     needs:
       - analyze-test
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - name: Download all test reports
+        uses: actions/download-artifact@v4
         with:
-          name: test-reports
+          path: ./downloaded-reports   # 👈 fetches all artifacts, regardless of name
 
-      - uses: dorny/test-reporter@v1
+      - name: Publish test report
+        uses: dorny/test-reporter@v1
         with:
           name: Flutter Tests
-          path: "*.json"
+          path: "downloaded-reports/**/*.json"
           reporter: flutter-json
           only-summary: "true"
