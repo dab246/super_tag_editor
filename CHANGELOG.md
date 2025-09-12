@@ -1,3 +1,9 @@
+# 0.3.3
+
+- Fix for _scrollToVisible throwing error [#51](https://github.com/dab246/super_tag_editor/pull/51)
+- Support previous/next arrow key for change focus tags
+- Upgrade flutter version to v3.27.4
+- Update to `actions/download-artifact@v4` to fix deprecation error
 
 # 0.3.2
 
