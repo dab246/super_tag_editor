@@ -1,5 +1,6 @@
 # 0.3.4
 - Update intl dependency to ^0.20.2
+- Support Flutter 3.32.8
 
 # 0.3.3
 
