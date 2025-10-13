@@ -1,3 +1,10 @@
+# 0.4.0
+
+- Fixed GitHub Actions test report workflow failing on forked PRs due to permission and authentication restrictions.
+
+### BREAKING CHANGES
+- Compatible with flutter version `v3.32.8`
+
 # 0.3.3
 
 - Fix for _scrollToVisible throwing error [#51](https://github.com/dab246/super_tag_editor/pull/51)
