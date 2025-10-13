@@ -7,27 +7,28 @@ on:
 name: CI
 
 env:
-  FLUTTER_VERSION: 3.27.4
+  FLUTTER_VERSION: 3.32.8
 
 jobs:
   analyze-test:
-    name: Analyze and test
-    uses: ./.github/workflows/analyze-test.yaml
-
-  build:
-    needs:
-      - analyze-test
-    runs-on: macos-latest
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: "stable"
+          channel: stable
+      - run: bash prebuild.sh
 
-      - name: Run prebuild
-        run: bash prebuild.sh
+      - name: Run Flutter tests
+        run: |
+          flutter test -r json > test-report.json
+
+      - name: Publish test report
+        if: success() || failure()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Flutter Tests
+          path: test-report.json
+          reporter: flutter-json
+          only-summary: false

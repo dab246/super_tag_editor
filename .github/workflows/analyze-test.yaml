@@ -1,38 +1,41 @@
-on:
-  workflow_call:
-
 name: Analyze and test
 
+on:
+  workflow_call:
+    secrets:
+      PERSONAL_GITHUB_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
 env:
-  FLUTTER_VERSION: 3.27.4
+  FLUTTER_VERSION: 3.32.8
 
 jobs:
   analyze-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        modules:
-          - default
-          - example
+        modules: [default, example]
       fail-fast: false
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: "stable"
+          channel: stable
 
-      - name: Run prebuild
-        run: bash prebuild.sh
+      - run: bash prebuild.sh
 
       - name: Analyze
         uses: zgosalvez/github-actions-analyze-dart@v1
         with:
-          analysis-options-file: "placeholder"
+          analysis-options-file: placeholder
 
       - name: Run Flutter tests
         run: |
@@ -43,29 +46,53 @@ jobs:
           fi
 
       - name: Upload test reports
-        if: success() || failure() # Always upload report
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports-${{ matrix.modules }}   # 👈 unique per module
+          name: test-reports-${{ matrix.modules }}
           path: test-report*.json
 
   report:
     runs-on: ubuntu-latest
-    if: success() || failure() # Always run
-    needs:
-      - analyze-test
+    if: success() || failure()
+    needs: analyze-test
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all test reports
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          path: ./downloaded-reports   # 👈 fetches all artifacts, regardless of name
+          path: ./downloaded-reports
 
-      - name: Publish test report
+      # ✅ Step 1 — For internal PRs only (not forks): publish check & comment
+      - name: Publish test report (internal PRs only)
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        id: testreport
         uses: dorny/test-reporter@v1
         with:
           name: Flutter Tests
-          path: "downloaded-reports/**/*.json"
+          path: downloaded-reports/**/*.json
           reporter: flutter-json
-          only-summary: "true"
+          only-summary: false
+          fail-on-error: false
+          token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+
+      - name: Comment detailed report (internal PRs only)
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: flutter-tests-report
+          token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          message: |
+            🧪 **Flutter Test Report**
+            ✅ **Status:** ${{ steps.testreport.outcome }}
+            🔍 **Modules:** default, example
+            ${{ steps.testreport.outputs.report }}
+
+      # ✅ Step 2 — For forked PRs: safely upload test reports as artifacts
+      - name: Upload test report artifact (for forked PRs)
+        if: ${{ github.event.pull_request.head.repo.fork == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-report-fork
+          path: downloaded-reports/**/*.json
