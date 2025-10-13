@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:super_tag_editor/tag_editor.dart';
 import 'package:super_tag_editor/widgets/rich_text_widget.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,18 +17,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Material Tag Editor Demo'),
+      home: const MyHomePage(title: 'Material Tag Editor Demo'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, this.title}) : super(key: key);
+  const MyHomePage({Key? key, this.title}) : super(key: key);
 
   final String? title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -73,11 +75,11 @@ class _MyHomePageState extends State<MyHomePage> {
   /// This is just an example for using `TextEditingController` to manipulate
   /// the the `TextField` just like a normal `TextField`.
   _onPressedModifyTextField() {
-    final text = 'Test';
+    const text = 'Test';
     _textEditingController.text = text;
     _textEditingController.value = _textEditingController.value.copyWith(
       text: text,
-      selection: TextSelection(
+      selection: const TextSelection(
         baseOffset: text.length,
         extentOffset: text.length,
       ),

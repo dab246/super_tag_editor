@@ -286,7 +286,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   }
 
   void _highlightPreviousOption() {
-    if (_suggestions?.isNotEmpty != true || _highlightedOptionIndex.value <= 0) {
+    if (_suggestions?.isNotEmpty != true ||
+        _highlightedOptionIndex.value <= 0) {
       return;
     }
 
@@ -529,9 +530,10 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
                     widget.suggestionItemHeight ?? defaultItemHeight;
                 final heightSuggestion = itemHeight * snapshot.data!.length;
                 final offsetY = min(heightSuggestion, suggestionBoxHeight);
-                final compositedTransformFollowerOffset = showTop && offsetY > bottomAvailableSpace
-                    ? Offset(0, -1.0 * (offsetY + itemHeight))
-                    : Offset.zero;
+                final compositedTransformFollowerOffset =
+                    showTop && offsetY > bottomAvailableSpace
+                        ? Offset(0, -1.0 * (offsetY + itemHeight))
+                        : Offset.zero;
 
                 return Positioned(
                   width: widget.suggestionBoxWidth ?? size.width,

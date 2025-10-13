@@ -1,3 +1,7 @@
+# 0.4.1
+
+- Release version `0.4.1` on `pub.dev`
+
 # 0.4.0
 
 - Fixed GitHub Actions test report workflow failing on forked PRs due to permission and authentication restrictions.
