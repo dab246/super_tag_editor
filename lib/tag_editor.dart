@@ -866,6 +866,12 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     widget.onDeleteTagAction?.call(index);
   }
 
+  void _handleTabShortcutKey() {
+    if (_tagFocusIndex != -1) {
+      _resetFocus();
+    }
+  }
+
   double _getTextWidth(String text, {TextStyle? textStyle}) {
     final textSpan = TextSpan(
       text: text,
@@ -898,6 +904,9 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
           break;
         case LogicalKeyboardKey.arrowRight:
           _focusNextTag();
+          break;
+        case LogicalKeyboardKey.tab:
+          _handleTabShortcutKey();
           break;
         default:
           break;
