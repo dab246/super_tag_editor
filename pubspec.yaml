@@ -3,7 +3,7 @@ description: >
   A Flutter widget for editing and managing tags with auto-suggestions and
   Material-like behavior. Designed to feel natural with Gmail-style tag inputs.
 
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/dab246/super_tag_editor
 repository: https://github.com/dab246/super_tag_editor
 issue_tracker: https://github.com/dab246/super_tag_editor/issues

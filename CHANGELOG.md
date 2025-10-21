@@ -1,3 +1,13 @@
+# 1.0.1
+
+📘 **Documentation and Metadata Update**
+
+- Updated `README.md` to fix markdown formatting and syntax errors
+- Added verified screenshot `example/screenshots/tag_editor_demo.png` for pub.dev package page
+- Improved `pubspec.yaml` metadata: topics, platforms, and description cleanup
+- No code changes or breaking changes — documentation-only release
+- Verified compatibility with Flutter 3.27.0+
+
 # 1.0.0
 
 🎉 **First stable release on pub.dev**
