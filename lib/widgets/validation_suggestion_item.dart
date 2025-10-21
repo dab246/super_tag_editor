@@ -4,10 +4,10 @@ class ValidationSuggestionItem
     extends InheritedNotifier<ValueNotifier<String?>> {
   /// Create an instance of ValidationSuggestionItem inherited widget.
   const ValidationSuggestionItem({
-    Key? key,
+    super.key,
     required ValueNotifier<String?> validationNotifier,
-    required Widget child,
-  }) : super(key: key, notifier: validationNotifier, child: child);
+    required super.child,
+  }) : super(notifier: validationNotifier);
 
   static String? of(BuildContext context) {
     return context

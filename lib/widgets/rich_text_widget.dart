@@ -11,15 +11,14 @@ class RichTextWidget extends StatelessWidget {
   final bool? softWrap;
 
   const RichTextWidget(
-      {Key? key,
+      {super.key,
       required this.textOrigin,
       required this.wordSearched,
       this.styleTextOrigin,
       this.styleWordSearched,
       this.maxLines,
       this.overflow,
-      this.softWrap})
-      : super(key: key);
+      this.softWrap});
 
   @override
   Widget build(BuildContext context) {

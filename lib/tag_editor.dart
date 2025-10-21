@@ -40,7 +40,7 @@ class TagEditor<T> extends StatefulWidget {
       required this.onTagChanged,
       required this.suggestionBuilder,
       required this.findSuggestions,
-      Key? key,
+      super.key,
       this.focusNode,
       this.focusNodeKeyboard,
       this.onHandleKeyEventAction,
@@ -103,8 +103,7 @@ class TagEditor<T> extends StatefulWidget {
                 (!hasAddButton &&
                     (inputDecoration ==
                         const InputDecoration(border: InputBorder.none))),
-            'The `autoHideTextInputField` feature is only available when `hasAddButton is false` and `inputDecoration is InputDecoration(border: InputBorder.none)`'),
-        super(key: key);
+            'The `autoHideTextInputField` feature is only available when `hasAddButton is false` and `inputDecoration is InputDecoration(border: InputBorder.none)`');
 
   /// The number of tags currently shown.
   final int length;
