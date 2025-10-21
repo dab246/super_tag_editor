@@ -1,3 +1,15 @@
+# 1.0.0
+
+🎉 **First stable release on pub.dev**
+
+- Promoted to a stable version (`1.0.0`)
+- Declared full Flutter platform support: Android, iOS, Web, macOS, Windows, and Linux
+- Added screenshot metadata for pub.dev presentation
+- Improved documentation and `README.md` formatting
+- Cleaned up and standardized `pubspec.yaml` structure
+- Verified compatibility with Flutter 3.27.0+
+- No breaking changes
+
 # 0.4.1
 
 - Release version `0.4.1` on `pub.dev`
