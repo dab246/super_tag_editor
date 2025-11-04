@@ -1,3 +1,10 @@
+# 1.1.0
+
+🎹 **Feature Update – Keyboard Accessibility**
+
+- Added **Tab key shortcut support** to switch focus between tag and input field.
+- Improves keyboard accessibility and usability for power users.
+
 # 1.0.1
 
 📘 **Documentation and Metadata Update**

@@ -119,6 +119,7 @@ class _Chip extends StatelessWidget {
 | `onDeleteTagAction` | Callback when a tag is removed. |
 | `debounce_throttle` | Built-in support for throttled input changes. |
 | `pointer_interceptor` | Prevents UI overlaps with web platform overlays. |
+| `Tab key shortcut` | Quickly switch focus between tag and input field using the keyboard. |
 
 ---
 
