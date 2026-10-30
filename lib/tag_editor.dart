@@ -575,6 +575,7 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
 
     final results =
         await widget.loadMoreSuggestions?.call(currentSuggestionValue);
+    if (!mounted) return;
     debugPrint(
         'TagsEditorState::_loadMoreSuggestion:results = ${results?.length}');
     if (results?.isNotEmpty != true) {
@@ -660,7 +661,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
   void _onSearchChanged(String value) async {
     final localId = ++_searchId;
     final results = await widget.findSuggestions(value);
-    if (_searchId == localId && mounted) {
+    if (!mounted) return;
+    if (_searchId == localId) {
       setState(() => _suggestions = results);
     }
     _updateHighlight(0);
@@ -675,7 +677,8 @@ class TagsEditorState<T> extends State<TagEditor<T>> {
     if (widget.searchAllSuggestions != null) {
       final localId = ++_searchId;
       final results = await widget.searchAllSuggestions!();
-      if (_searchId == localId && mounted) {
+      if (!mounted) return;
+      if (_searchId == localId) {
         setState(() => _suggestions = results);
       }
       _updateHighlight(0);
