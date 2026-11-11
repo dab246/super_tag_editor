@@ -1,3 +1,11 @@
+# 1.1.1
+
+🐛 **Bug Fix – Async suggestion updates after dispose**
+
+- Skip suggestion updates when a lookup finishes after the editor is disposed.
+- Guards `_onSearchChanged`, `openSuggestionBox`, and `_loadMoreSuggestion` so they no longer write to disposed notifiers or closed streams.
+- Adds widget tests covering dispose and mounted paths for search, search-all, and load-more.
+
 # 1.1.0
 
 🎹 **Feature Update – Keyboard Accessibility**
