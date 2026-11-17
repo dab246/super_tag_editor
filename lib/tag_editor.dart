@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:debounce_throttle/debounce_throttle.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:super_tag_editor/suggestions_box_controller.dart';
